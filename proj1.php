@@ -146,11 +146,11 @@
         } catch (Exception $e) {
             err("Can't open '$args->input' as input file.", 2);
         }
-        $my_json = json_decode($input);
-        if ($my_json == NULL) {
+        $json = json_decode($input, true);
+        if ($json == NULL) {
             err("Can't decode input data", 4);
         }
-        return $my_json;
+        return $json;
     }
 
     // source: http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning
@@ -165,6 +165,6 @@
     $args = new Arguments($argv);
     $args->check_arguments();
 //    print_r(get_object_vars($args));
-    $json_data = read_input($args);
-
+    $json = read_input($args);
+    var_dump($json);
 ?>
