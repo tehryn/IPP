@@ -147,7 +147,7 @@
             err("Can't open '$args->input' as input file.", 2);
         }
         $json = json_decode($input, true);
-        if ($json == NULL) {
+        if ($json === NULL) {
             err("Can't decode input data", 4);
         }
         return $json;
@@ -164,6 +164,21 @@
         if ($args->root_element != NULL) {
             $xml->startElement($args->root_element);
         }
+
+        $xml->endDocument();
+        try {
+            $output = fopen($args->output, "w");
+        } catch (Exception $e) {
+            err("Can't open '$args->output' as output file.", 3);
+        }
+        try {
+            fwrite($output,$xml->outputMemory(TRUE));
+        } catch (Exception $e) {
+            err("Can't write to '$args->output' (output file)", 3);
+        }
+        if (fclose($out_file) == FALSE) {
+            err("Can't close '$args->output' as output file.", 3);
+        }
     }
 
     // source: http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning
@@ -179,5 +194,6 @@
     $args->check_arguments();
 //    print_r(get_object_vars($args));
     $json = read_input($args);
-    var_dump($json);
+//    var_dump($json);
+    write_output($args, $json);
 ?>
