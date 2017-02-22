@@ -3,7 +3,7 @@
     class Arguments {
         public $help         = FALSE;
         public $input        = "php://stdin";
-        public $output       = "php://stout";
+        public $output       = "php://stdout";
         public $invalid_char = "-";
         public $xml_header   = TRUE;
         public $root_element = NULL;
