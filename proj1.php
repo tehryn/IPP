@@ -153,6 +153,19 @@
         return $json;
     }
 
+    function write_output(Arguments $args, $json) {
+        $xml = new XMLWriter();
+        $xml->openMemory();
+        $xml->setIdent(true);
+
+        if ($args->xml_header == TRUE) {
+            $xml->startDocument('1.0','UTF-8');
+        }
+        if ($args->root_element != NULL) {
+            $xml->startElement($args->root_element);
+        }
+    }
+
     // source: http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning
     set_error_handler(function($errno, $errstr, $errfile, $errline, array $errcontext) {
         if (0 === error_reporting()) {
