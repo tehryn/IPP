@@ -176,7 +176,7 @@
         } catch (Exception $e) {
             err("Can't write to '$args->output' (output file)", 3);
         }
-        if (fclose($out_file) == FALSE) {
+        if (fclose($output) == FALSE) {
             err("Can't close '$args->output' as output file.", 3);
         }
     }
