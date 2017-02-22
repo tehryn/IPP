@@ -146,7 +146,7 @@
         } catch (Exception $e) {
             err("Can't open '$args->input' as input file.", 2);
         }
-        $json = json_decode($input, true);
+        $json = json_decode($input, TRUE);
         if ($json === NULL) {
             err("Can't decode input data", 4);
         }
@@ -156,7 +156,7 @@
     function write_output(Arguments $args, $json) {
         $xml = new XMLWriter();
         $xml->openMemory();
-        $xml->setIdent(true);
+        $xml->setIndent(TRUE);
 
         if ($args->xml_header == TRUE) {
             $xml->startDocument('1.0','UTF-8');
