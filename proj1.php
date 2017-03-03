@@ -140,6 +140,27 @@
         exit($err);
     }
 
+    function write_element($element, Arguments $args, XMLWriter $xml) {
+        // TODO je validni?
+        if (is_bool($element)) {
+            if ($args->literal === TRUE) {
+                if ($element === TRUE) {
+                    $xml->startElement("true");
+                }
+                else {
+                    $xml->startElement("false");
+                }
+                $xml->endElement();
+            }
+        }
+        elseif (is_numeric($element)) {
+            echo "zapisuji cislo\n";
+        }
+        elseif (is_string($element)) {
+            echo "zapisuji string\n";
+        }
+    }
+
     function read_input(Arguments $args) {
         try {
             $input = file_get_contents($args->input);
@@ -155,14 +176,36 @@
 
     function write_output(Arguments $args, $json) {
         $xml = new XMLWriter();
-        $xml->openMemory();
+        if ($xml->openMemory()  === FALSE) {
+            if (fclose($output) == FALSE) {
+                err("XMLWriter error on openMemory method and Can't close '$args->output' as output file.", 100); //TODO error code
+            }
+            err("XMLWriter error on openMemory method", 100); //TODO error code
+        }
         $xml->setIndent(TRUE);
 
-        if ($args->xml_header == TRUE) {
+        if ($args->xml_header === TRUE) {
             $xml->startDocument('1.0','UTF-8');
         }
         if ($args->root_element != NULL) {
             $xml->startElement($args->root_element);
+        }
+        var_dump(is_array($json)); // TODO co kdyz array nebude???
+        foreach ($json as $key => $var) {
+            if ($args->decode === TRUE) {
+                //TODO
+            }
+            //TODO zkontrolovat validitu elementu
+            var_dump($key);
+            $xml->startElement($key);
+            if (is_array($var) === TRUE) {
+                // TODO
+                echo "Zapsal jsem pole\n";
+            }
+            else {
+                write_element($var, $args, $xml);
+            }
+            $xml->endElement();
         }
 
         $xml->endDocument();
