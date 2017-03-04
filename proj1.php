@@ -93,8 +93,11 @@
             }
         }
 
-        public function check_arguments() {
+        public function check_arguments($argc) {
             if ($this->help == TRUE) {
+                if ($argc != 2) {
+                    err("Invalid use of program arguments", 1);
+                }
                 $this->print_help();
             }
             if ($this->idx_item == FALSE and $this->set_start == TRUE) {
@@ -111,7 +114,7 @@
                     "[--input=filename --output=filename -s -i -c -n --help -h=subst -r=root-element -a -t --start --types --array-name=array-element --item-name=item-element]\n",
                     "Created by Matejka Jiri (xmatej52)",
                     "-s                         values of type string will be transformed to text elements\n",
-                    "-i                         TODO",
+                    "-i                         numbers will be lements instead of atributes\n",
                     "-l                         values of true, false and null will be transfored to elements\n",
                     "-c                         Try to eliminate invalid characters\n",
                     "-n                         Will not generate XML header\n",
@@ -140,24 +143,95 @@
         exit($err);
     }
 
-    function write_element($element, Arguments $args, XMLWriter $xml) {
+    function add_types($value, XMLWriter $xml) {
+        $str = gettype($value);
+        if ($str === "boolean") {
+            $str = "literal";
+        }
+        $xml->writeAttribute("type", $str);
+    }
+
+    function write_value($value, Arguments $args, XMLWriter $xml) {
         // TODO je validni?
-        if (is_bool($element)) {
+        if (is_bool($value)) {
             if ($args->literal === TRUE) {
-                if ($element === TRUE) {
+                if ($value === TRUE) {
                     $xml->startElement("true");
                 }
                 else {
                     $xml->startElement("false");
                 }
+                if ($args->add_types === TRUE) {
+                    add_types($value, $xml);
+                }
                 $xml->endElement();
             }
+            else {
+                if ($value === TRUE) {
+                    $xml->writeAttribute("value", "true");
+                }
+                else {
+                    $xml->writeAttribute("value", "false");
+                }
+                if ($args->add_types === TRUE) {
+                    add_types($value, $xml);
+                }
+            }
         }
-        elseif (is_numeric($element)) {
-            echo "zapisuji cislo\n";
+        elseif (is_numeric($value)) {
+            $value = floor($value);
+            if ($args->itm2element === TRUE) {
+                $xml->startElement("$value");
+                if ($args->add_types === TRUE) {
+                    add_types($value, $xml);
+                }
+                $xml->endElement();
+            }
+            else {
+                $xml->writeAttribute("value", $value);
+                if ($args->add_types === TRUE) {
+                    add_types($value, $xml);
+                }
+            }
         }
-        elseif (is_string($element)) {
-            echo "zapisuji string\n";
+        elseif (is_string($value)) {
+            if ($args->str2element === TRUE) {
+                $xml->writeRaw($value); // TODO add_types
+            }
+            else {
+                $xml->writeAttribute("value", $value);
+                if ($args->add_types === TRUE) {
+                    add_types($value, $xml);
+                }
+            }
+        }
+
+        if ($value === NULL) {
+            echo "zapisuji null\n";
+        }
+    }
+
+    function recursive_write ($json, Arguments $args, XMLWriter $xml) {
+//        echo "var_dump(is_array(\$json)): ";
+//        var_dump(is_array($json)); // TODO co kdyz array nebude???
+        foreach ($json as $key => $var) {
+            if ($args->decode === TRUE) {
+                //TODO
+            }
+            //TODO zkontrolovat validitu elementu
+//            var_dump($key);
+            if (!is_integer($key)) {
+                $xml->startElement($key);
+                if (is_array($var) === TRUE) {
+                    $xml->startElement($args->arr_name);
+                    proc_array($var, $args, $xml);
+                    $xml->startEnd($args->arr_name);
+                }
+                else {
+                    write_value($var, $args, $xml);
+                }
+                $xml->endElement();
+            }
         }
     }
 
@@ -189,25 +263,12 @@
         }
         if ($args->root_element != NULL) {
             $xml->startElement($args->root_element);
+            recursive_write($json, $args, $xml);
+            $xml->startElement($args->root_element);
         }
-        var_dump(is_array($json)); // TODO co kdyz array nebude???
-        foreach ($json as $key => $var) {
-            if ($args->decode === TRUE) {
-                //TODO
-            }
-            //TODO zkontrolovat validitu elementu
-            var_dump($key);
-            $xml->startElement($key);
-            if (is_array($var) === TRUE) {
-                // TODO
-                echo "Zapsal jsem pole\n";
-            }
-            else {
-                write_element($var, $args, $xml);
-            }
-            $xml->endElement();
+        else {
+            recursive_write($json, $args, $xml);
         }
-
         $xml->endDocument();
         try {
             $output = fopen($args->output, "w");
@@ -234,7 +295,7 @@
 
     unset($argv[0]);
     $args = new Arguments($argv);
-    $args->check_arguments();
+    $args->check_arguments($argc);
 //    print_r(get_object_vars($args));
     $json = read_input($args);
 //    var_dump($json);
