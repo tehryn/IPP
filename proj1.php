@@ -71,7 +71,7 @@
                 }
                 elseif (preg_match("/^--start=.+/", $arg) and $this->set_start == FALSE) {
                     $tmp = substr($arg, 8);
-                    if (is_int($tmp) and (int)$tmp >= 0) {
+                    if (ctype_digit($tmp)/* and (int)$tmp >= 0*/) {
                         $this->idx_start = (int)$tmp;
                         $this->set_start = TRUE;
                     }
@@ -112,7 +112,7 @@
         private function print_help() {
             echo    "Usage: php ./proj1 ",
                     "[--input=filename --output=filename -s -i -c -n --help -h=subst -r=root-element -a -t --start --types --array-name=array-element --item-name=item-element]\n",
-                    "Created by Matejka Jiri (xmatej52)",
+                    "Created by Matejka Jiri (xmatej52)\n",
                     "-s                         values of type string will be transformed to text elements\n",
                     "-i                         numbers will be lements instead of atributes\n",
                     "-l                         values of true, false and null will be transfored to elements\n",
@@ -136,7 +136,7 @@
     /**
      * Writes error message on standart error output and exit program
      * @param  string $str error message
-     * @param  [type] $err return code
+     * @param  int    $err return code
      */
     function err($str, $err) {
         fwrite(STDERR, $str . "\n");
@@ -155,14 +155,14 @@
         // TODO je validni?
         if (is_bool($value)) {
             if ($args->literal === TRUE) {
+                if ($args->add_types === TRUE) {
+                    add_types($value, $xml);
+                }
                 if ($value === TRUE) {
                     $xml->startElement("true");
                 }
                 else {
                     $xml->startElement("false");
-                }
-                if ($args->add_types === TRUE) {
-                    add_types($value, $xml);
                 }
                 $xml->endElement();
             }
@@ -179,13 +179,12 @@
             }
         }
         elseif (is_numeric($value)) {
-            $value = floor($value);
+            $new_value = floor($value);
             if ($args->itm2element === TRUE) {
-                $xml->startElement("$value");
                 if ($args->add_types === TRUE) {
                     add_types($value, $xml);
                 }
-                $xml->endElement();
+                $xml->writeRaw("$new_value");
             }
             else {
                 $xml->writeAttribute("value", $value);
@@ -196,7 +195,10 @@
         }
         elseif (is_string($value)) {
             if ($args->str2element === TRUE) {
-                $xml->writeRaw($value); // TODO add_types
+                if ($args->add_types === TRUE) {
+                    add_types($value, $xml);
+                }
+                $xml->writeRaw($value);
             }
             else {
                 $xml->writeAttribute("value", $value);
@@ -206,31 +208,62 @@
             }
         }
 
-        if ($value === NULL) {
-            echo "zapisuji null\n";
+        elseif ($value === NULL) {
+            if ($args->literal === TRUE) {
+                $xml->startElement("null");
+                $xml->endElement();
+            }
+            else {
+                $xml->writeAttribute("value", $value);
+            }
         }
+    }
+
+    function proc_array($json, Arguments $args, XMLWriter $xml) {
+        $xml->startElement($args->arr_name);
+        if ($args->arr_size === TRUE) {
+            $xml->writeAttribute("size",count($json));
+        }
+        $idx = $args->idx_start;
+        foreach ($json as $key => $var) {
+            $xml->startElement($args->item_name);
+            if ($args->idx_item) {
+                $xml->writeAttribute("index", $idx);
+                $idx++;
+            }
+            write_value($var, $args, $xml);
+            $xml->endElement();
+        }
+
+        $xml->endElement();
     }
 
     function recursive_write ($json, Arguments $args, XMLWriter $xml) {
 //        echo "var_dump(is_array(\$json)): ";
 //        var_dump(is_array($json)); // TODO co kdyz array nebude???
-        foreach ($json as $key => $var) {
-            if ($args->decode === TRUE) {
-                //TODO
-            }
-            //TODO zkontrolovat validitu elementu
-//            var_dump($key);
-            if (!is_integer($key)) {
-                $xml->startElement($key);
-                if (is_array($var) === TRUE) {
-                    $xml->startElement($args->arr_name);
-                    proc_array($var, $args, $xml);
-                    $xml->startEnd($args->arr_name);
+        if (is_array($json) === TRUE) {
+            proc_array($json, $args, $xml);
+        }
+        else {
+            foreach ($json as $key => $var) {
+                if ($args->decode === TRUE) {
+                    //TODO
                 }
-                else {
-                    write_value($var, $args, $xml);
+                //TODO zkontrolovat validitu elementu
+                //var_dump($key);
+                if (!is_integer($key)) {
+                    $xml->startElement($key);
+                    if (is_array($var) === TRUE) {
+                        proc_array($var, $args, $xml);
+                    }
+                    elseif (is_object($var) === TRUE) {
+                        recursive_write($var, $args, $xml);
+                    }
+                    else {
+                        write_value($var, $args, $xml);
+                    }
+                    $xml->endElement();
                 }
-                $xml->endElement();
             }
         }
     }
@@ -241,7 +274,7 @@
         } catch (Exception $e) {
             err("Can't open '$args->input' as input file.", 2);
         }
-        $json = json_decode($input, TRUE);
+        $json = json_decode($input, FALSE);
         if ($json === NULL) {
             err("Can't decode input data", 4);
         }
@@ -251,9 +284,6 @@
     function write_output(Arguments $args, $json) {
         $xml = new XMLWriter();
         if ($xml->openMemory()  === FALSE) {
-            if (fclose($output) == FALSE) {
-                err("XMLWriter error on openMemory method and Can't close '$args->output' as output file.", 100); //TODO error code
-            }
             err("XMLWriter error on openMemory method", 100); //TODO error code
         }
         $xml->setIndent(TRUE);
@@ -264,7 +294,7 @@
         if ($args->root_element != NULL) {
             $xml->startElement($args->root_element);
             recursive_write($json, $args, $xml);
-            $xml->startElement($args->root_element);
+            $xml->endElement();
         }
         else {
             recursive_write($json, $args, $xml);
@@ -296,8 +326,10 @@
     unset($argv[0]);
     $args = new Arguments($argv);
     $args->check_arguments($argc);
-//    print_r(get_object_vars($args));
+//    var_dump(get_object_vars($args));
     $json = read_input($args);
 //    var_dump($json);
+//    var_dump(is_array($json));
+//    var_dump(is_object($json));
     write_output($args, $json);
 ?>
