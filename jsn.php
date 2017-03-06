@@ -272,7 +272,7 @@
 //        try {
             $input = file_get_contents($args->input);
 //        } catch (Exception $e) {
-            err("Can't open '$args->input' as input file.", 2);
+//            err("Can't open '$args->input' as input file.", 2);
 //        }
         $json = json_decode($input, FALSE);
         if ($json === NULL) {
@@ -316,12 +316,12 @@
     }
 
     // source: http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning
-    set_error_handler(function($errno, $errstr, $errfile, $errline, array $errcontext) {
+/*    set_error_handler(function($errno, $errstr, $errfile, $errline, array $errcontext) {
         if (0 === error_reporting()) {
             return false;
         }
         throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
-    });
+    });*/
 
     unset($argv[0]);
     $args = new Arguments($argv);
