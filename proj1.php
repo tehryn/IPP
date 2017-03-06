@@ -269,11 +269,11 @@
     }
 
     function read_input(Arguments $args) {
-        try {
+//        try {
             $input = file_get_contents($args->input);
-        } catch (Exception $e) {
+//        } catch (Exception $e) {
             err("Can't open '$args->input' as input file.", 2);
-        }
+//        }
         $json = json_decode($input, FALSE);
         if ($json === NULL) {
             err("Can't decode input data", 4);
