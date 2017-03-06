@@ -80,12 +80,12 @@
                     }
                 }
                 elseif (preg_match("/^--array-name=.+/", $arg) and $this->set_arr == FALSE) {
-                    $this->root_element = substr($arg, 13);
-                    $this->set_arr      = TRUE;
+                    $this->arr_name = substr($arg, 13);
+                    $this->set_arr  = TRUE;
                 }
                 elseif (preg_match("/^--item-name=.+/", $arg) and $this->set_item == FALSE) {
-                    $this->root_element = substr($arg, 12);
-                    $this->set_item     = TRUE;
+                    $this->item_name = substr($arg, 12);
+                    $this->set_item  = TRUE;
                 }
                 else {
                     err("Invalid use of program arguments", 1);
@@ -214,7 +214,7 @@
                 $xml->endElement();
             }
             else {
-                $xml->writeAttribute("value", $value);
+                $xml->writeAttribute("value", "null");
             }
         }
     }
