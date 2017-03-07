@@ -1,4 +1,3 @@
-#!/usr/bin/php
 <?php
     class Arguments {
         public $help         = FALSE;
@@ -246,7 +245,15 @@
                 $xml->writeAttribute("index", $idx);
                 $idx++;
             }
-            write_value($var, $args, $xml);
+            if (is_object($var)) {
+                proc_data($var, $args, $xml);
+            }
+            elseif (is_array($var)) {
+                proc_array($var, $args, $xml)
+            }
+            else {
+                write_value($var, $args, $xml);
+            }
             $xml->endElement();
         }
 
