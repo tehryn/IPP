@@ -143,7 +143,7 @@
         exit($err);
     }
 
-    function string replace_invalid($element, $args) {
+    function replace_invalid($element, $args) {
         $ret = str_replace("<", $args->invalid_char, $element);
         $ret = str_replace(">", $args->invalid_char, $element);
         $ret = str_replace("&", $args->invalid_char, $element);
