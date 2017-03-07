@@ -249,7 +249,7 @@
                 proc_data($var, $args, $xml);
             }
             elseif (is_array($var)) {
-                proc_array($var, $args, $xml)
+                proc_array($var, $args, $xml);
             }
             else {
                 write_value($var, $args, $xml);
