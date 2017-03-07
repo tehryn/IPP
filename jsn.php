@@ -143,6 +143,14 @@
         exit($err);
     }
 
+    function string replace_invalid($element, $args) {
+        $ret = str_replace("<", $args->invalid_char, $element);
+        $ret = str_replace(">", $args->invalid_char, $element);
+        $ret = str_replace("&", $args->invalid_char, $element);
+        $ret = str_replace("\"", $args->invalid_char, $element);
+        $ret = str_replace("'", $args->invalid_char, $element);
+        return $ret;
+    }
     function add_types($value, XMLWriter $xml) {
         $str = gettype($value);
         if ($str === "boolean") {
@@ -220,13 +228,21 @@
     }
 
     function proc_array($json, Arguments $args, XMLWriter $xml) {
-        $xml->startElement($args->arr_name);
+        try {
+            $xml->startElement($args->arr_name);
+        } catch (Exception $e) {
+            err("Invalid element name: $args->arr_name", 50);
+        }
         if ($args->arr_size === TRUE) {
             $xml->writeAttribute("size",count($json));
         }
         $idx = $args->idx_start;
         foreach ($json as $key => $var) {
-            $xml->startElement($args->item_name);
+            try {
+                $xml->startElement($args->item_name);
+            } catch (Exception $e) {
+                err("Invalid element name: $args->item_name", 50);
+            }
             if ($args->idx_item) {
                 $xml->writeAttribute("index", $idx);
                 $idx++;
@@ -246,13 +262,13 @@
         }
         else {
             foreach ($json as $key => $var) {
-                if ($args->decode === TRUE) {
-                    //TODO
-                }
-                //TODO zkontrolovat validitu elementu
-                //var_dump($key);
+                $key = replace_invalid($key, $args);
                 if (!is_integer($key)) {
-                    $xml->startElement($key);
+                    try {
+                        $xml->startElement($key);
+                    } catch (Exception $e) {
+                        err("Invalid element name: $key", 50);
+                    }
                     if (is_array($var) === TRUE) {
                         proc_array($var, $args, $xml);
                     }
@@ -269,11 +285,11 @@
     }
 
     function read_input(Arguments $args) {
-//        try {
+        try {
             $input = file_get_contents($args->input);
-//        } catch (Exception $e) {
-//            err("Can't open '$args->input' as input file.", 2);
-//        }
+        } catch (Exception $e) {
+            err("Can't open '$args->input' as input file.", 2);
+        }
         $json = json_decode($input, FALSE);
         if ($json === NULL) {
             err("Can't decode input data", 4);
@@ -292,7 +308,11 @@
             $xml->startDocument('1.0','UTF-8');
         }
         if ($args->root_element != NULL) {
-            $xml->startElement($args->root_element);
+            try {
+                $xml->startElement($args->root_element);
+            } catch (Exception $e) {
+                err("Invalid element name: $args->root_element", 50);
+            }
             recursive_write($json, $args, $xml);
             $xml->endElement();
         }
@@ -316,12 +336,12 @@
     }
 
     // source: http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning
-/*    set_error_handler(function($errno, $errstr, $errfile, $errline, array $errcontext) {
+    set_error_handler(function($errno, $errstr, $errfile, $errline, array $errcontext) {
         if (0 === error_reporting()) {
             return false;
         }
         throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
-    });*/
+    });
 
     unset($argv[0]);
     $args = new Arguments($argv);
