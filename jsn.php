@@ -160,7 +160,6 @@
     }
 
     function write_value($value, Arguments $args, XMLWriter $xml) {
-        // TODO je validni?
         if (is_bool($value)) {
             if ($args->literal === TRUE) {
                 if ($args->add_types === TRUE) {
@@ -254,9 +253,7 @@
         $xml->endElement();
     }
 
-    function recursive_write ($json, Arguments $args, XMLWriter $xml) {
-//        echo "var_dump(is_array(\$json)): ";
-//        var_dump(is_array($json)); // TODO co kdyz array nebude???
+    function proc_data($json, Arguments $args, XMLWriter $xml) {
         if (is_array($json) === TRUE) {
             proc_array($json, $args, $xml);
         }
@@ -273,7 +270,7 @@
                         proc_array($var, $args, $xml);
                     }
                     elseif (is_object($var) === TRUE) {
-                        recursive_write($var, $args, $xml);
+                        proc_data($var, $args, $xml);
                     }
                     else {
                         write_value($var, $args, $xml);
@@ -313,11 +310,11 @@
             } catch (Exception $e) {
                 err("Invalid element name: $args->root_element", 50);
             }
-            recursive_write($json, $args, $xml);
+            proc_data($json, $args, $xml);
             $xml->endElement();
         }
         else {
-            recursive_write($json, $args, $xml);
+            proc_data($json, $args, $xml);
         }
         $xml->endDocument();
         try {
