@@ -144,7 +144,6 @@
 
     function replace_invalid($element, $args) {
         $ret = str_replace(">", $args->invalid_char, $element);
-        $ret = str_replace("<", $args->invalid_char, $ret);
         $ret = str_replace("&", $args->invalid_char, $ret);
         $ret = str_replace("\"", $args->invalid_char, $ret);
         $ret = str_replace("'", $args->invalid_char, $ret);
