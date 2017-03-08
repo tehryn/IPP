@@ -162,7 +162,7 @@
     }
     function add_types($value, XMLWriter $xml) {
         $str = gettype($value);
-        if ($str === "boolean") {
+        if ($str === "boolean" or $str === "NULL") {
             $str = "literal";
         }
         $xml->writeAttribute("type", $str);
@@ -229,11 +229,17 @@
 
         elseif ($value === NULL) {
             if ($args->literal === TRUE) {
+                if ($args->add_types === TRUE) {
+                    add_types($value, $xml);
+                }
                 $xml->startElement("null");
                 $xml->endElement();
             }
             else {
                 $xml->writeAttribute("value", "null");
+                if ($args->add_types === TRUE) {
+                    add_types($value, $xml);
+                }
             }
         }
     }
