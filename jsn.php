@@ -151,12 +151,20 @@
         return $ret;
     }
     function replace_string($string) {
-        $ret = str_replace("<", "&lt" , $string);
-        $ret = str_replace(">", "&gt", $ret);
-        $ret = str_replace("&", "&amp", $ret);
-        $ret = str_replace("\"", "&quot", $ret);
-        $ret = str_replace("'", "&apos", $ret);
+/*        var_dump($string);
+        $ret = str_replace("&", "&amp;", $string);
+        var_dump($ret);
+        $ret = str_replace("'", "&apos;", $ret);
+        var_dump($ret);
+        $ret = str_replace("<", "&lt;" , $ret);
+        var_dump($ret);
+        $ret = str_replace(">", "&gt;", $ret);
+        var_dump($ret);
+        $ret = str_replace("\"", "&quot;", $ret);
+        var_dump($ret);
         return $ret;
+*/
+        return $string;
     }
     function add_types($value, XMLWriter $xml) {
         $str = gettype($value);
