@@ -150,6 +150,14 @@
         $ret = str_replace("'", $args->invalid_char, $ret);
         return $ret;
     }
+    function replace_string($string) {
+        $ret = str_replace("<", "&lt" , $string);
+        $ret = str_replace(">", "&gt", $ret);
+        $ret = str_replace("&", "&amp", $ret);
+        $ret = str_replace("\"", "&quot", $ret);
+        $ret = str_replace("'", "&apos", $ret);
+        return $ret;
+    }
     function add_types($value, XMLWriter $xml) {
         $str = gettype($value);
         if ($str === "boolean") {
@@ -200,6 +208,9 @@
             }
         }
         elseif (is_string($value)) {
+            if ($args->decode === TRUE) {
+                $value = replace_string($value);
+            }
             if ($args->str2element === TRUE) {
                 if ($args->add_types === TRUE) {
                     add_types($value, $xml);
