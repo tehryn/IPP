@@ -1,0 +1,3 @@
+<string value="value" type="string"/>
+<int value="10" type="integer"/>
+<bool value="true" type="literal"/>
