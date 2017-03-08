@@ -143,15 +143,12 @@
     }
 
     function replace_invalid($element, $args) {
-        var_dump($element);
-        $ret = str_replace("<", $args->invalid_char, $element);
         $ret = str_replace(">", $args->invalid_char, $ret);
         $ret = str_replace("&", $args->invalid_char, $ret);
         $ret = str_replace("\"", $args->invalid_char, $ret);
         $ret = str_replace("'", $args->invalid_char, $ret);
         $ret = str_replace("\\", $args->invalid_char, $ret);
         $ret = str_replace("/", $args->invalid_char, $ret);
-        var_dump($ret);
         return $ret;
     }
     function replace_string($string) {
