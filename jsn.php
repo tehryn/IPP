@@ -143,28 +143,24 @@
     }
 
     function replace_invalid($element, $args) {
+        var_dump($element);
         $ret = str_replace("<", $args->invalid_char, $element);
         $ret = str_replace(">", $args->invalid_char, $ret);
         $ret = str_replace("&", $args->invalid_char, $ret);
         $ret = str_replace("\"", $args->invalid_char, $ret);
         $ret = str_replace("'", $args->invalid_char, $ret);
+        $ret = str_replace("\\", $args->invalid_char, $ret);
+        $ret = str_replace("/", $args->invalid_char, $ret);
+        var_dump($ret);
         return $ret;
     }
     function replace_string($string) {
-/*        var_dump($string);
         $ret = str_replace("&", "&amp;", $string);
-        var_dump($ret);
         $ret = str_replace("'", "&apos;", $ret);
-        var_dump($ret);
         $ret = str_replace("<", "&lt;" , $ret);
-        var_dump($ret);
         $ret = str_replace(">", "&gt;", $ret);
-        var_dump($ret);
         $ret = str_replace("\"", "&quot;", $ret);
-        var_dump($ret);
         return $ret;
-*/
-        return $string;
     }
     function add_types($value, XMLWriter $xml) {
         $str = gettype($value);
@@ -216,12 +212,12 @@
             }
         }
         elseif (is_string($value)) {
-            if ($args->decode === TRUE) {
-                $value = replace_string($value);
-            }
             if ($args->str2element === TRUE) {
                 if ($args->add_types === TRUE) {
                     add_types($value, $xml);
+                }
+                if ($args->decode === TRUE) {
+                    $value = replace_string($value);
                 }
                 $xml->writeRaw($value);
             }
