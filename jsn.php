@@ -144,10 +144,10 @@
 
     function replace_invalid($element, $args) {
         $ret = str_replace("<", $args->invalid_char, $element);
-        $ret = str_replace(">", $args->invalid_char, $element);
-        $ret = str_replace("&", $args->invalid_char, $element);
-        $ret = str_replace("\"", $args->invalid_char, $element);
-        $ret = str_replace("'", $args->invalid_char, $element);
+        $ret = str_replace(">", $args->invalid_char, $ret);
+        $ret = str_replace("&", $args->invalid_char, $ret);
+        $ret = str_replace("\"", $args->invalid_char, $ret);
+        $ret = str_replace("'", $args->invalid_char, $ret);
         return $ret;
     }
     function add_types($value, XMLWriter $xml) {
@@ -184,7 +184,7 @@
                 }
             }
         }
-        elseif (is_numeric($value)) {
+        elseif (is_integer($value) or is_double($value)) {
             $new_value = floor($value);
             if ($args->itm2element === TRUE) {
                 if ($args->add_types === TRUE) {
@@ -271,7 +271,7 @@
                     try {
                         $xml->startElement($key);
                     } catch (Exception $e) {
-                        err("Invalid element name: $key", 50);
+                        err("Invalid element name: $key", 51);
                     }
                     if (is_array($var) === TRUE) {
                         proc_array($var, $args, $xml);
