@@ -1,4 +1,8 @@
 <?php
+    /**
+     * Class that represents program arguments.
+     * Class includes two methodes for printing help and validing arguments
+     */
     class Arguments {
         public $help         = FALSE;
         public $input        = "php://stdin";
@@ -24,6 +28,13 @@
         private $set_arr     = FALSE;
         private $set_item    = FALSE;
 
+        /**
+         * Object constructor - set all public and private variables and exit
+         * program with return code 1 if there is unknown argument or 2 same
+         * arguments are given.
+         * @param array $arguments Array of program arguments.
+         * @pre   There is no program name in array.
+         */
         public function __construct($arguments) {
             foreach ($arguments as $arg) {
                 if ($arg == "--help" and $this->help == FALSE) {
@@ -92,6 +103,11 @@
             }
         }
 
+        /**
+         * Checks if all arugemts are valide. Exit program with return code 1
+         * if there is invalid settings.
+         * @param int $argc Number of arguments
+         */
         public function check_arguments($argc) {
             if ($this->help == TRUE) {
                 if ($argc != 2) {
@@ -106,7 +122,7 @@
         }
 
         /**
-         * Print manual page on standart output and exit program with return code 0
+         * Prints manual page on standart output and exit program with return code 0
          */
         private function print_help() {
             echo    "Usage: php ./proj1 ",
@@ -142,6 +158,12 @@
         exit($err);
     }
 
+    /**
+     * Replaces invalid characters in string that will be use for XML element
+     * @param  string    $element String that represents future element.
+     * @param  Arguments $args    Object of class Arguments with stored settings
+     * @return string             String where invalid characters where replaced.
+     */
     function replace_invalid($element, $args) {
         $ret = str_replace(">", $args->invalid_char, $element);
         $ret = str_replace("<", $args->invalid_char, $ret);
@@ -152,6 +174,12 @@
         $ret = str_replace("/", $args->invalid_char, $ret);
         return $ret;
     }
+
+    /**
+     * Replaces invalid characters in string that will be used for storing values.
+     * @param  string $string String that represents future value in XML file.
+     * @return string         String where invalid characters are replaced.
+     */
     function replace_string($string) {
         $ret = str_replace("&", "&amp;", $string);
         $ret = str_replace("'", "&apos;", $ret);
@@ -160,6 +188,13 @@
         $ret = str_replace("\"", "&quot;", $ret);
         return $ret;
     }
+
+    /**
+     * Adds attribute 'type' in element which is open when function is called.
+     * @param mixed     $value Value of elements that will be use for
+     *                  recognizing type.
+     * @param XMLWriter $xml   object of class XMLWriter.
+     */
     function add_types($value, XMLWriter $xml) {
         $str = gettype($value);
         if ($str === "boolean" or $str === "NULL") {
@@ -168,6 +203,15 @@
         $xml->writeAttribute("type", $str);
     }
 
+    /**
+     * Writes value of element which is open when function is called or create
+     * new elements if needed.
+     * @param  mixed     $value Value that will be written in XML file.
+     * @param  Arguments $args  Object of class Arguments with stored program
+     *                          settings.
+     * @param  XMLWriter $xml   Object of class XMLWriter which is used for
+     *                          writing into XML file.
+     */
     function write_value($value, Arguments $args, XMLWriter $xml) {
         if (is_bool($value)) {
             if ($args->literal === TRUE) {
@@ -244,6 +288,14 @@
         }
     }
 
+    /**
+     * Procces an array of json data.
+     * @param  array     $json Array of json data.
+     * @param  Arguments $args Object of class Arguments with stored program
+     *                         settings.
+     * @param  XMLWriter $xml  Object of class XMLWriter that is used for
+     *                         writing into XML file
+     */
     function proc_array($json, Arguments $args, XMLWriter $xml) {
         try {
             $xml->startElement($args->arr_name);
@@ -279,6 +331,14 @@
         $xml->endElement();
     }
 
+    /**
+     * Procces json object.
+     * @param  Object    $json Json object;
+     * @param  Arguments $args Object of class Arguments with stored program
+     *                         settings.
+     * @param  XMLWriter $xml  Object of class XMLWriter which is used for
+     *                         writing into XML file.
+     */
     function proc_data($json, Arguments $args, XMLWriter $xml) {
         if (is_array($json) === TRUE) {
             proc_array($json, $args, $xml);
@@ -307,6 +367,12 @@
         }
     }
 
+    /**
+     * Retrive json data from input file.
+     * @param  Arguments $args Object of class Arguments with stored program
+     *                         settings.
+     * @return mixed           Json data.
+     */
     function read_input(Arguments $args) {
         try {
             $input = file_get_contents($args->input);
@@ -320,6 +386,12 @@
         return $json;
     }
 
+    /**
+     * Writes json data as XML into output file.
+     * @param  Arguments $args Object of class Arguments with stored program
+     *                         settings.
+     * @param  [type]    $json Json data.
+     */
     function write_output(Arguments $args, $json) {
         $xml = new XMLWriter();
         if ($xml->openMemory()  === FALSE) {
@@ -364,15 +436,12 @@
             return false;
         }
         throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
-    });
+    }); /// Generates exceptions instead of warnings.
 
-    unset($argv[0]);
-    $args = new Arguments($argv);
-    $args->check_arguments($argc);
-//    var_dump(get_object_vars($args));
-    $json = read_input($args);
-//    var_dump($json);
-//    var_dump(is_array($json));
-//    var_dump(is_object($json));
-    write_output($args, $json);
+    unset($argv[0]); // Deleting program name from arguments
+    $args = new Arguments($argv); // Storing program setting into variable
+    $args->check_arguments($argc); // Validing arguments
+    $json = read_input($args); // Retrieving data from input
+    write_output($args, $json); // Writing data to output
+    exit(0); // exiting program with return code 0
 ?>
