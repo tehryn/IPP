@@ -1,0 +1,51 @@
+\documentclass[a4paper, 10pt]{article}
+\usepackage[left=1.5cm,text={18cm, 25cm},top=2.5cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[czech]{babel}
+\usepackage{setspace}
+\usepackage{times}
+
+\begin{document}
+    Dokumentace úlohy JSN: JSN2PHP v PHP 5 do IPP 2016/2017
+    Jméno a příjmení: Jiří Matějka
+    Login: xmatej52
+    \section{Zadání, použité funkce a třídy}
+        Úkolem bylo vytvořit script, který převede text ve fromát json do formátu
+        xml. Jazyk php obsahuje třídu, XMLWriter, která mi zpracování této úlohy
+        značně usnadnila. Dále jsem pro načtení vstupních dat použil funci
+        json_decode().
+    \section{Postup řešení}
+        \subsection{Zpracování parametrů programu}
+            Parametry (argumenty) programu jsem zpracoval pomocí třídy, ve které
+            bylo uchování i nastavení celého programu (jména elementů pro pole,
+            itemy, zda se má generovat hlavička dokumentu či ne, ...) a probíhala
+            tam kontrola, zda všechny argumenty byly zadány ve správném formátu.
+        \subsection{Načítání vstupních dat}
+            Vstupní soubor byl načten najednou pomocí volání funkce file_get_contents(),
+            která načte obsah celého souboru do proměné. Nad touto proměnou jsem
+            zavolal už jen funkci json_decode(), která mi v případě úspěchu vrátila
+            pole připravené pro další zpracování.
+        \subsection{Zpracování načtených vstupních dat}
+            Zpracování dat byla pro mě nejtěžší část této úlohy, hlavně proto, že
+            script měl spoustu paramaterů a každý parametr mohl úplně změnit
+            výstupní formát. Ve scriptu jsou funkce určené na řešení jednotlivých
+            podúloh: zápis objektu, pole, přidání atribut (popřípadě tvorba nových
+            elementů) a přidání datových typů. Zápis vnořených polí a objektů
+            řeším rekurzí.
+        \subsection{Vytvoření výstupního souboru}
+            Výstupní soubor se otvírá až poté, co je celý vstup zpracován a pouze
+            tehdy, když při zpracování nenastala žádná chyba. Zápis do souboru
+            je dělán voláním funkce fwrite() nad otevřeným souborem a nad prvkem
+            třídy XMLWriter.
+        \subsection{Řešení chybových stavů}
+            Při kontrole návratových hodnot některých volaných funkcí jsem měl
+            problém rozlišit, kdy při podmíněném skoku psát '==' a kdy psát '==='.
+            Navíc se mi na chybový výstup často vypisovalo varování, které se mi
+            nelíbilo. Nakonec se mi tento problém podařilo vyřešit tak, že jsem
+            každou chybu vyhodnotil jako vyjímku a tu jsem se snažil odchytit.
+    \section{Závěr}
+        Díky tomuto projektu jsem si vyzkoušel práci s jazykem PHP. Velice se mi
+        líbili dokumentační stránky k jednotlivým funkcím a třídám. Nevyhovovala
+        mi především volnost, kterou mi php poskytovalo, zejména v podobě
+        přetypování.
+\end{document}

@@ -140,7 +140,6 @@
             if ($this->idx_item == FALSE and $this->set_start == TRUE) {
                 err("Invalid use of program arguments", 1);
             }
-            //TODO
         }
 
         /**
