@@ -13,7 +13,7 @@
         Úkolem bylo vytvořit script, který převede text ve fromát json do formátu
         xml. Jazyk php obsahuje třídu, XMLWriter, která mi zpracování této úlohy
         značně usnadnila. Dále jsem pro načtení vstupních dat použil funci
-        json_decode().
+        json\_decode().
     \section{Postup řešení}
         \subsection{Zpracování parametrů programu}
             Parametry (argumenty) programu jsem zpracoval pomocí třídy, ve které
@@ -21,9 +21,9 @@
             itemy, zda se má generovat hlavička dokumentu či ne, ...) a probíhala
             tam kontrola, zda všechny argumenty byly zadány ve správném formátu.
         \subsection{Načítání vstupních dat}
-            Vstupní soubor byl načten najednou pomocí volání funkce file_get_contents(),
+            Vstupní soubor byl načten najednou pomocí volání funkce file\_get\_contents(),
             která načte obsah celého souboru do proměné. Nad touto proměnou jsem
-            zavolal už jen funkci json_decode(), která mi v případě úspěchu vrátila
+            zavolal už jen funkci json\_decode(), která mi v případě úspěchu vrátila
             pole připravené pro další zpracování.
         \subsection{Zpracování načtených vstupních dat}
             Zpracování dat byla pro mě nejtěžší část této úlohy, hlavně proto, že
