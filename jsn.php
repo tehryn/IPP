@@ -4,28 +4,50 @@
      * Class includes two methodes for printing help and validing arguments
      */
     class Arguments {
+        /// Tells if --help was given
         public $help         = FALSE;
+        /// Input file
         public $input        = "php://stdin";
+        /// Output file
         public $output       = "php://stdout";
+        /// Holds string dor replacing invalid characters
         public $invalid_char = "-";
+        /// Tells if we will generate XML header
         public $xml_header   = TRUE;
+        /// Holds string for generating root elements
         public $root_element = NULL;
+        /// Holds string for naming array elements
         public $arr_name     = "array";
+        /// Holds string for naming item elements
         public $item_name    = "item";
+        /// Tells if we will parse string as elements or not (as values)
         public $str2element  = FALSE;
+        /// Tells if we will parse integers as elements or not (as values)
         public $itm2element  = FALSE;
+        /// Tells if we will parse literals as elements or not (as values)
         public $literal      = FALSE;
+        /// Tells if we will decode invalid characters or not
         public $decode       = FALSE;
+        /// Tells if we will add array size into array elements
         public $arr_size     = FALSE;
+        /// Tells if we will index elements
         public $idx_item     = FALSE;
+        /// Holds value of integers on which value items indexing starts
         public $idx_start    = 1;
+        /// Tells if we will add types of values
         public $add_types    = FALSE;
 
+        /// Tells if we already specified input file
         private $set_input   = FALSE;
+        /// Tells if we already specified output file
         private $set_output  = FALSE;
+        /// Tells if we already specified string for replacing invalid characters
         private $set_inv     = FALSE;
+        /// Tells if we already specified value for indexing items
         private $set_start   = FALSE;
+        /// Tells if we already specified name of array elements
         private $set_arr     = FALSE;
+        /// Tells if we already specified name of item elements
         private $set_item    = FALSE;
 
         /**
@@ -430,13 +452,15 @@
         }
     }
 
-    // source: http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning
+// Script starts here:
+    /// source: http://stackoverflow.com/questions/1241728/can-i-try-catch-a-warning
+    /// Generates exceptions instead of warnings so I can catch warning as exception.
     set_error_handler(function($errno, $errstr, $errfile, $errline, array $errcontext) {
         if (0 === error_reporting()) {
             return false;
         }
         throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
-    }); /// Generates exceptions instead of warnings.
+    });
 
     unset($argv[0]); // Deleting program name from arguments
     $args = new Arguments($argv); // Storing program setting into variable
