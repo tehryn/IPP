@@ -17,9 +17,9 @@
     Login: xmatej52
 
     \section{Zadání, použité funkce a třídy}
-        Úkolem bylo vytvořit script, který převede text ve fromát json do formátu
-        xml. Jazyk php obsahuje třídu, XMLWriter, která mi zpracování této úlohy
-        značně usnadnila. Dále jsem pro načtení vstupních dat použil funci
+        Úkolem bylo vytvořit script, který převede text ve fromátu json do formátu
+        xml. Jazyk php obsahuje třídu XMLWriter, která mi zpracování této úlohy
+        značně usnadnila. Dále jsem pro načtení vstupních dat použil funkci
         \texttt{json\_decode()}.
     \section{Postup řešení}
         \subsection{Zpracování parametrů programu}
@@ -29,18 +29,18 @@
             tam kontrola, zda všechny argumenty byly zadány ve správném formátu.
         \subsection{Načítání vstupních dat}
             Vstupní soubor byl načten najednou pomocí volání funkce \texttt{file\_get\_contents()},
-            která načte obsah celého souboru do proměné. Nad touto proměnou jsem
+            která načte obsah celého souboru do proměnné. Nad touto proměnnou jsem
             zavolal už jen funkci \texttt{json\_decode()}, která mi v případě úspěchu vrátila
             pole připravené pro další zpracování.
         \subsection{Zpracování načtených vstupních dat}
             Zpracování dat byla pro mě nejtěžší část této úlohy, hlavně proto, že
-            script měl spoustu paramaterů a každý parametr mohl úplně změnit
+            script měl spoustu parameterů a každý parametr mohl úplně změnit
             výstupní formát. Ve scriptu jsou funkce určené na řešení jednotlivých
             podúloh: zápis objektu, pole, přidání atribut (popřípadě tvorba nových
             elementů) a přidání datových typů. Zápis vnořených polí a objektů
             řeším rekurzí.
         \subsection{Vytvoření výstupního souboru}
-            Výstupní soubor se otvírá až poté, co je celý vstup zpracován a pouze
+            Výstupní soubor se otvírá až poté, co je celý vstup zpracován, a pouze
             tehdy, když při zpracování nenastala žádná chyba. Zápis do souboru
             je dělán voláním funkce \texttt{fwrite()} nad otevřeným souborem a nad prvkem
             třídy XMLWriter.
@@ -49,10 +49,10 @@
             problém rozlišit, kdy při podmíněném skoku psát '==' a kdy psát '==='.
             Navíc se mi na chybový výstup často vypisovalo varování, které se mi
             nelíbilo. Nakonec se mi tento problém podařilo vyřešit tak, že jsem
-            každou chybu vyhodnotil jako vyjímku a tu jsem se snažil odchytit.
+            každou chybu vyhodnotil jako výjimku a tu jsem se snažil odchytit.
         \subsection{Testování}
-            Během tvorby scriptu, jsem script testoval na svém stroji (Ubuntu 16.04)
-            a to interpretem PHP 7. Až, když se výsledek výstupy programu blížily
+            Během tvorby scriptu jsem script testoval na svém stroji, (Ubuntu 16.04)
+            a to interpretem PHP 7. Až když se výsledek výstupu programu blížil
             přiloženým testům, začal jsem tvořit vlastní testy a program jsem spouštěl
             na školním serveru Merlin s verzí interpretu PHP 5.6.
         \subsection{Odevzdání}
@@ -60,11 +60,11 @@
             Až na pár drobných úprav se mi to podařilo i s rezervou několika dnů
             a hodnocení programu bylo v rozmezí od 80\% -- 100\%. Dokumentaci jsem
             tvořil až po pokusném odevzdání a to pomocí \LaTeX u. Při dokumentaci kódu jsem se snažil
-            dodržet formátu dokumentovacího nástroje Doxygen pro dokumentaci funkcí,
+            dodržet formát dokumentovacího nástroje Doxygen pro dokumentaci funkcí,
             proměnných, tříd a metod.
     \section{Shrnutí}
         Díky tomuto projektu jsem si vyzkoušel práci s jazykem PHP. Velice se mi
-        líbili dokumentační stránky k jednotlivým funkcím a třídám. Nevyhovovala
+        líbily dokumentační stránky k jednotlivým funkcím a třídám. Nevyhovovala
         mi především volnost, kterou mi php poskytovalo, zejména v podobě
         přetypování.
 \end{document}
