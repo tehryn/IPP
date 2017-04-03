@@ -138,53 +138,55 @@ def prepare_data(data):
 
 
 def retrieve_data(data):
+    # Dictionary for storing states, alphabet, rules, starting state and
+    # finishing state.
     input_data             = {"states":set(), "alphabet":set(), "rules":list(),
                               "start_state":str(), "fin_states":set()}
-    ident                  = str()
+    # Regex pattern for validing state variable
     pattern                = re.compile(r"[_]{0}[aA-zZ]\w*[_]{0}")
-    state                  = -1
-    next_state             = 0
-    expected_bracket_open  = True
-    expected_bracket_close = False
-    expected_brace_open    = False
-    expected_brace_close   = False
-    expected_comma         = False
-    expected_apostrophe    = False
-    expected_arrow         = False
-    data = enumerate(data)
+
+    ident                  = str()  # Variable for temporary storing usefull data
+    state                  = -1     # Represents current state of state machine
+    next_state             = 0      # Represents next state
+    expected_bracket_open  = True   # Tells if expected character is (
+    expected_bracket_close = False  # Tells if expected character is )
+    expected_brace_open    = False  # Tells if expected character is {
+    expected_comma         = False  # Tells if expected character is ,
+    expected_apostrophe    = False  # Tells if expected character is '
+
+    data = enumerate(data) # String is not iterable, but function next is used
+    # State machine itself. i is index, char is substring of string with length 1
     for i, char in data:
-        if state == 0:
-            if expected_brace_open:
+        if state == 0: # State 0 represents loading set of states.
+            if expected_brace_open: # Reading opening brase of set
                 if char != "{":
                     err("Missing opening brace in input source.", 60)
                 expected_brace_open = False
             else:
                 ident = ""
-                while char != ",":
-                    if char == "}":
-                        expected_comma = True
-                        state          = -1
-                        next_state     = 1
+                while char != ",":            # Reading state identificator
+                    if char == "}":           # Last state in set was read
+                        expected_comma = True # Comma need to be inserted
+                        state          = -1   # Switching to default state
+                        next_state     = 1    # Setting next state
                         break
                     else:
-                        ident += char
-                        i, char = next(data)
-                        if char == None:
+                        ident  += char
+                        i, char = next(data)  # Reading next char
+                        if char is None:      # End of source was reached
                             err("Invalid imput source.", 60)
-                if not pattern.match(ident):
+                if not pattern.match(ident):  # Testing validity of identificator
                     err("'%s' is invalid name of state."%(ident), 60)
-                input_data["states"].add(ident)
-        elif state == 1:
-            if expected_brace_open:
+                input_data["states"].add(ident) # Adding state into set
+        elif state == 1: # State 1 represents loading alphabet
+            if expected_brace_open: # reading opening brace of set
                 if char != "{":
                     err("Missing opening brace in input source.", 60)
                 expected_brace_open = False
-            elif char == "}":
-                next_state     = 2
-                state          = -1
-                expected_comma = True
-            else:
-                if char != "'":
+            elif char == "}":    # Set is empty
+                err("Input alphabet is empty.", 61)
+            else:                # Reading symbol
+                if char != "'":  # Symbol is ''
                     err("Missing apostrophe in input source.", 60)
                 i, char = next(data)
                 if (char == "'"):
@@ -192,87 +194,89 @@ def retrieve_data(data):
                     if (char != "'"):
                         err("Invalid member of alphabet.", 60)
                     ident = "''"
-                elif (char == None):
+                elif char is None: # End of source is reached
                     err("Invalid input source.", 60)
-                else:
+                else:              # Char is nothing special
                     ident = char
                 i, char = next(data)
-                if char != "'":
+                if char != "'":    # Checking ending apostrophe
                     err("Missing apostrophe in input source.", 60)
-                input_data["alphabet"].add(ident)
+                input_data["alphabet"].add(ident) # Adding symbol into set
                 i, char = next(data)
-                if char == ",":
+                if char == ",":           # Next sybol is expected
                     pass
-                elif char == "}":
-                    next_state     = 2
-                    expected_comma = True
-                    state          = -1
+                elif char == "}":         # End of set
+                    next_state     = 2    # Setting next state
+                    expected_comma = True # Comma need to be inserted
+                    state          = -1   # Switching to default state
                 else:
                     err("Invalid input source", 60)
 
-        elif state == 2:
-            if expected_brace_open:
+        elif state == 2: # State 2 represents loading rules
+            if expected_brace_open: # Set of rules starts with {
                 if char != "{":
                     err("Missing opening brace in input source.", 60)
                 expected_brace_open = False
-            elif char == "}":
-                next_state     = 3
-                expected_comma = True
-                state          = -1
+            elif char == "}":         # Set is empty
+                next_state     = 3    # Setting next state
+                expected_comma = True # Comma need to be inserted
+                state          = -1   # Switching to default state
             else:
+                # ident will now represents dictionary with 3 items:
+                # starting state, read symbol and next state
                 ident = {"start":str(), "symbol":str(), "next":str()}
-                while char != "'":
+                while char != "'":         # Loading starting state
                     ident["start"] += char
                     i, char = next(data)
-                    if char == None:
+                    if char is None:       # End of source was reached
                         err("Invalid imput source.", 60)
-                if not pattern.match(ident["start"]):
+                if not pattern.match(ident["start"]): # Validing identificator
                     err("'%s' is invalid name of state."%(ident["start"]), 60)
-                if not (ident["start"] in input_data["states"]):
+                if not (ident["start"] in input_data["states"]): # Checking if state is declareted
                     err("State '%s' is not declareted in states."%(ident["start"]), 61)
-                i, char = next(data)
-                if char == "'":
+                i, char = next(data) # Reading symbol
+                if char == "'": # Symbol is ''
                     i, char = next(data)
                     if char != "'":
                         err("Missing apostrophe in input source.", 60)
                     ident["symbol"] = "''"
-                else:
+                else:           # Symbol is nothing special
                     ident["symbol"] = char
-                if not(ident["symbol"] in input_data["alphabet"]):
+                if not(ident["symbol"] in input_data["alphabet"]): # Checking if symbol is declareted
                     err("Symbol '%s' is not declareted in input alphabet."%(ident["symbol"]), 61)
                 i, char = next(data)
-                if (char != "'"):
+                if (char != "'"):  # Checking presence of ending apostrophe
                     err("Missing apostrophe in input source.", 60)
                 i, char = next(data)
-                if char != "-":
+                if char != "-":    # Checking presence of ->
                     err("Invalid syntax in set of rules", 60)
                 i, char = next(data)
-                if char != ">":
+                if char != ">":    # Checking presence of ->
                     err("Invalid syntax in set of rules", 60)
                 i, char = next(data)
-                while char != ",":
-                    if char == None:
+                while char != ",":             # Reading next state
+                    if char is None:           # End of source was reached
                         err("Invalid input source.", 60)
-                    elif char == "}":
-                        next_state     = 3
-                        expected_comma = True
-                        state          = -1
+                    elif char == "}":          # End of set was reached
+                        next_state     = 3     # Setting next state
+                        expected_comma = True  # Comma needs to be inserted
+                        state          = -1    # Switching to current state
                         break
                     else:
                         ident["next"] += char
                         i, char = next(data)
-                if not pattern.match(ident["next"]):
+                if not pattern.match(ident["next"]): # Validing state
                     err("'%s' is invalid name of state."%(ident["next"]), 60)
-                if not(ident["next"] in input_data["states"]):
+                if not(ident["next"] in input_data["states"]): # Checking if state is declareted
                     err("State '%s' is not declareted in states."%(ident["next"]), 61)
-                if not(ident in input_data["rules"]):
+                if not(ident in input_data["rules"]): # Avoiding multiple rules declaration
                     input_data["rules"].append(ident)
         elif state == 3:
             ident = ""
             while char != ",":
                 ident += char
                 i, char = next(data)
-                if char == None:
+                if char is None:
                     err("Invalid imput source.", 60)
             if not pattern.match(ident):
                 err("'%s' is invalid name of state."%(ident), 60)
@@ -297,10 +301,12 @@ def retrieve_data(data):
                     else:
                         ident  += char
                         i, char = next(data)
-                        if char == None:
+                        if char is None:
                             err("Invalid imput source.", 60)
                 if not pattern.match(ident):
                     err("'%s' is invalid name of state."%(ident), 60)
+                if not (ident in input_data["states"]):
+                    err("Finishing state '%s' is not declareted in states."%(ident), 61)
                 input_data["fin_states"].add(ident)
         elif state > 4:
             err("Invalid input source.", 60)
@@ -330,4 +336,5 @@ if args.help:
     Arguments.print_help()
     exit(0)
 input_data = parse_input(args)
+#TODO udelat semantickou kontrolu
 debug(input_data)
