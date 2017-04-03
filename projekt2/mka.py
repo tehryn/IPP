@@ -138,7 +138,8 @@ def prepare_data(data):
 
 
 def retrieve_data(data):
-    input_data             = {"states":set(), "alphabet":set(), "rules":list()}
+    input_data             = {"states":set(), "alphabet":set(), "rules":list(),
+                              "start_state":str(), "fin_states":set()}
     ident                  = str()
     pattern                = re.compile(r"[_]{0}[aA-zZ]\w*[_]{0}")
     state                  = -1
@@ -228,7 +229,7 @@ def retrieve_data(data):
                 if not pattern.match(ident["start"]):
                     err("'%s' is invalid name of state."%(ident["start"]), 60)
                 if not (ident["start"] in input_data["states"]):
-                    err("State '%s' is not declareted in states."%(ident), 61)
+                    err("State '%s' is not declareted in states."%(ident["start"]), 61)
                 i, char = next(data)
                 if char == "'":
                     i, char = next(data)
@@ -267,9 +268,40 @@ def retrieve_data(data):
                 if not(ident in input_data["rules"]):
                     input_data["rules"].append(ident)
         elif state == 3:
-            pass
+            ident = ""
+            while char != ",":
+                ident += char
+                i, char = next(data)
+                if char == None:
+                    err("Invalid imput source.", 60)
+            if not pattern.match(ident):
+                err("'%s' is invalid name of state."%(ident), 60)
+            if not(ident in input_data["states"]):
+                err("State '%s' is not declareted in states."%(ident), 61)
+            input_data["start_state"] = ident
+            state               = 4
+            expected_brace_open = True
         elif state == 4:
-            pass
+            if expected_brace_open:
+                if char != "{":
+                    err("Missing opening brace in input source.", 60)
+                expected_brace_open = False
+            else:
+                ident = ""
+                while char != ",":
+                    if char == "}":
+                        expected_comma         = False
+                        state                  = -1
+                        expected_bracket_close = True
+                        break
+                    else:
+                        ident  += char
+                        i, char = next(data)
+                        if char == None:
+                            err("Invalid imput source.", 60)
+                if not pattern.match(ident):
+                    err("'%s' is invalid name of state."%(ident), 60)
+                input_data["fin_states"].add(ident)
         elif state > 4:
             err("Invalid input source.", 60)
         elif expected_comma:
