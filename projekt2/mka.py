@@ -50,7 +50,7 @@ class Arguments:
 
     def __str__(self):
         """
-            Print both private and public variables with its values
+            Returns both private and public variable names with their values as string
         """
         return ('help:         %s \n'
                 'input:        %s \n'
@@ -105,7 +105,7 @@ def parse_input(args):
         Tries to open input file and parse it.
         Returns dictionary with keys 'states', 'alphabet', 'rules', 'start_state'
         and 'finish state', where 'rules' is list of dictionaries with keys
-        'start', 'symbol' and 'next_state'. All 3 are strings. 'start_state' is
+        'start', 'symbol' and 'next'. All 3 are strings. 'start_state' is
         string and rest are sets.
     """
     try:
@@ -155,7 +155,7 @@ def retrieve_data(data):
         and useless white characters.
         Returns dictionary with keys 'states', 'alphabet', 'rules', 'start_state'
         and 'finish state', where 'rules' is list of dictionaries with keys
-        'start', 'symbol' and 'next_state'. All 3 are strings. 'start_state' is
+        'start', 'symbol' and 'next'. All 3 are strings. 'start_state' is
         string and rest are sets.
     """
     # Dictionary for storing states, alphabet, rules, starting state and
