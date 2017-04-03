@@ -1,8 +1,9 @@
 #!/usr/bin/env python3.5
 import sys
+import re
 
 def debug(s):
-    sys.stderr.write(str(s))
+    print("------\n" + str(s))
 
 class Arguments:
     """
@@ -137,43 +138,134 @@ def prepare_data(data):
 
 
 def retrieve_data(data):
-    input_data             = dict()
-#    reading_states         = False
-#    reading_alphabet       = False
-#    reading_rules          = False
-#    reading_start_state    = False
-#    reading_finish_states  = False
-
-    state = -1
+    input_data             = {"states":set(), "alphabet":set(), "rules":list()}
+    ident                  = str()
+    pattern                = re.compile(r"[_]{0}[aA-zZ]\w*[_]{0}")
+    state                  = -1
+    next_state             = 0
     expected_bracket_open  = True
     expected_bracket_close = False
-    expectet_brace_open    = False
+    expected_brace_open    = False
     expected_brace_close   = False
     expected_comma         = False
     expected_apostrophe    = False
     expected_arrow         = False
-    next_state             = 1
-    for char in data:
+    data = enumerate(data)
+    for i, char in data:
         if state == 0:
-            if expectet_brace_open:
+            if expected_brace_open:
                 if char != "{":
                     err("Missing opening brace in input source.", 60)
-                expected_bracket_open = False
-            elif expected_brace_close:
-                if char != "}":
-                    err("Missing closing brace in input source", 60)
-                expected_brace_close = False
-                expected_comma       = True
-                next_state           = 2
-                state                = -1
-            elif expected_comma:
-                if char != ",":
-                    expected_comma = False
-
+                expected_brace_open = False
+            else:
+                ident = ""
+                while char != ",":
+                    if char == "}":
+                        expected_comma = True
+                        state          = -1
+                        next_state     = 1
+                        break
+                    else:
+                        ident += char
+                        i, char = next(data)
+                        if char == None:
+                            err("Invalid imput source.", 60)
+                if not pattern.match(ident):
+                    err("'%s' is invalid name of state."%(ident), 60)
+                input_data["states"].add(ident)
         elif state == 1:
-            pass
+            if expected_brace_open:
+                if char != "{":
+                    err("Missing opening brace in input source.", 60)
+                expected_brace_open = False
+            elif char == "}":
+                next_state     = 2
+                state          = -1
+                expected_comma = True
+            else:
+                if char != "'":
+                    err("Missing apostrophe in input source.", 60)
+                i, char = next(data)
+                if (char == "'"):
+                    i, char = next(data)
+                    if (char != "'"):
+                        err("Invalid member of alphabet.", 60)
+                    ident = "''"
+                elif (char == None):
+                    err("Invalid input source.", 60)
+                else:
+                    ident = char
+                i, char = next(data)
+                if char != "'":
+                    err("Missing apostrophe in input source.", 60)
+                input_data["alphabet"].add(ident)
+                i, char = next(data)
+                if char == ",":
+                    pass
+                elif char == "}":
+                    next_state     = 2
+                    expected_comma = True
+                    state          = -1
+                else:
+                    err("Invalid input source", 60)
+
         elif state == 2:
-            pass
+            if expected_brace_open:
+                if char != "{":
+                    err("Missing opening brace in input source.", 60)
+                expected_brace_open = False
+            elif char == "}":
+                next_state     = 3
+                expected_comma = True
+                state          = -1
+            else:
+                ident = {"start":str(), "symbol":str(), "next":str()}
+                while char != "'":
+                    ident["start"] += char
+                    i, char = next(data)
+                    if char == None:
+                        err("Invalid imput source.", 60)
+                if not pattern.match(ident["start"]):
+                    err("'%s' is invalid name of state."%(ident["start"]), 60)
+                if not (ident["start"] in input_data["states"]):
+                    err("State '%s' is not declareted in states."%(ident), 61)
+                i, char = next(data)
+                if char == "'":
+                    i, char = next(data)
+                    if char != "'":
+                        err("Missing apostrophe in input source.", 60)
+                    ident["symbol"] = "''"
+                else:
+                    ident["symbol"] = char
+                if not(ident["symbol"] in input_data["alphabet"]):
+                    err("Symbol '%s' is not declareted in input alphabet."%(ident["symbol"]), 61)
+                i, char = next(data)
+                if (char != "'"):
+                    err("Missing apostrophe in input source.", 60)
+                i, char = next(data)
+                if char != "-":
+                    err("Invalid syntax in set of rules", 60)
+                i, char = next(data)
+                if char != ">":
+                    err("Invalid syntax in set of rules", 60)
+                i, char = next(data)
+                while char != ",":
+                    if char == None:
+                        err("Invalid input source.", 60)
+                    elif char == "}":
+                        next_state     = 3
+                        expected_comma = True
+                        state          = -1
+                        break
+                    else:
+                        ident["next"] += char
+                        i, char = next(data)
+                if not pattern.match(ident["next"]):
+                    err("'%s' is invalid name of state."%(ident["next"]), 60)
+                if not(ident["next"] in input_data["states"]):
+                    err("State '%s' is not declareted in states."%(ident["next"]), 61)
+                if not(ident in input_data["rules"]):
+                    input_data["rules"].append(ident)
         elif state == 3:
             pass
         elif state == 4:
@@ -183,18 +275,21 @@ def retrieve_data(data):
         elif expected_comma:
             if char != ",":
                 err("Missing comma in input source.", 60)
+            expected_comma = False
             state = next_state
+            if state != 3:
+                expected_brace_open = True
         elif expected_bracket_open:
             if char != "(":
                 err("Missing opening bracked in input source.", 60)
             expected_brace_open   = True
             expected_bracket_open = False
-            state = 1
+            state = 0
         elif expected_bracket_close:
             if char != ")":
                 err("Missing closing bracked in input source", 60)
             state = 5
-
+    return input_data
 
 
 del sys.argv[0]
