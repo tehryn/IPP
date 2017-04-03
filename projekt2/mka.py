@@ -101,6 +101,13 @@ def err(message, code):
 
 
 def parse_input(args):
+    """
+        Tries to open input file and parse it.
+        Returns dictionary with keys 'states', 'alphabet', 'rules', 'start_state'
+        and 'finish state', where 'rules' is list of dictionaries with keys
+        'start', 'symbol' and 'next_state'. All 3 are strings. 'start_state' is
+        string and rest are sets.
+    """
     try:
         input = args.input
         if (not (input is sys.stdin)):
@@ -109,35 +116,48 @@ def parse_input(args):
         input.close()
     except:
         err("Unable to open input file '" + str(args.input) + "' for reading", 2)
-    if args.insensitive:
-        data = data.lower()
-    data = prepare_data(data)
-    data = retrieve_data(data)
+    data = prepare_data(data)   # Deletes coments and white characters
+    if args.insensitive:        # Check for argument --case-insensitive
+        data = data.lower()     # Convert whole input into lowercase
+    data = retrieve_data(data)  # Parse input
     return data
 
 def prepare_data(data):
-    comment     = False
-    apostrophe  = False
-    raw_string = str()
+    """
+        Deletes all comments and all useless white characters.
+    """
+    comment     = False # Tells if we are in comment
+    apostrophe  = False # Tells if we are between 2 apostrophes
+    raw_string = str()  # Variable for storing parsed data
+
+    # Simple state machine where c represents string of length 1
     for c in data:
-        if comment:
-            if c == "\n":
+        if comment:        # If we are in comment, we ignore all characters
+            if c == "\n":  # expect end of line.
                 comment = False
             continue
-        elif not apostrophe and c == "#":
+        elif not apostrophe and c == "#": # Detecting comments
             comment = True
             continue
-        elif c == "'":
+        elif c == "'":    # Detecting apostrophes
             if not apostrophe:
                 apostrophe = True
             else:
                 apostrophe = False
-        if(not c.isspace() or (c.isspace() and apostrophe)):
+        if(not c.isspace() or (c.isspace() and apostrophe)): # Ignoring white characters
             raw_string += c
     return raw_string
 
 
 def retrieve_data(data):
+    """
+        Parses definition of state machine. Definition should be without spaces
+        and useless white characters.
+        Returns dictionary with keys 'states', 'alphabet', 'rules', 'start_state'
+        and 'finish state', where 'rules' is list of dictionaries with keys
+        'start', 'symbol' and 'next_state'. All 3 are strings. 'start_state' is
+        string and rest are sets.
+    """
     # Dictionary for storing states, alphabet, rules, starting state and
     # finishing state.
     input_data             = {"states":set(), "alphabet":set(), "rules":list(),
@@ -271,62 +291,61 @@ def retrieve_data(data):
                     err("State '%s' is not declareted in states."%(ident["next"]), 61)
                 if not(ident in input_data["rules"]): # Avoiding multiple rules declaration
                     input_data["rules"].append(ident)
-        elif state == 3:
+        elif state == 3: # State 3 represents reading starting state
             ident = ""
-            while char != ",":
+            while char != ",": # Reading state identificator
                 ident += char
                 i, char = next(data)
-                if char is None:
+                if char is None: # End of source reached
                     err("Invalid imput source.", 60)
-            if not pattern.match(ident):
+            if not pattern.match(ident): # Validing identificator
                 err("'%s' is invalid name of state."%(ident), 60)
-            if not(ident in input_data["states"]):
+            if not(ident in input_data["states"]): # Checking if state is declareted
                 err("State '%s' is not declareted in states."%(ident), 61)
-            input_data["start_state"] = ident
-            state               = 4
-            expected_brace_open = True
-        elif state == 4:
-            if expected_brace_open:
+            input_data["start_state"] = ident # adding state
+            state               = 4           # Switching to next state
+            expected_brace_open = True        # Comma was read, brace is expected
+        elif state == 4: # State 4 represents loading finishing states
+            if expected_brace_open: # Reading starting brace of set
                 if char != "{":
                     err("Missing opening brace in input source.", 60)
                 expected_brace_open = False
             else:
                 ident = ""
-                while char != ",":
-                    if char == "}":
-                        expected_comma         = False
-                        state                  = -1
-                        expected_bracket_close = True
+                while char != ",":                  # Reading state identificator
+                    if char == "}":                 # End of set was reached
+                        state                  = -1 # Switching to default state
+                        expected_bracket_close = True # End of source expected
                         break
                     else:
                         ident  += char
                         i, char = next(data)
                         if char is None:
                             err("Invalid imput source.", 60)
-                if not pattern.match(ident):
+                if not pattern.match(ident): # Validing state identificator
                     err("'%s' is invalid name of state."%(ident), 60)
-                if not (ident in input_data["states"]):
+                if not (ident in input_data["states"]): # Checking is state was declareted
                     err("Finishing state '%s' is not declareted in states."%(ident), 61)
                 input_data["fin_states"].add(ident)
-        elif state > 4:
+        elif state > 4: # states > 4 represents Error states
             err("Invalid input source.", 60)
-        elif expected_comma:
+        elif expected_comma: # Parsing comma between sets declaration
             if char != ",":
                 err("Missing comma in input source.", 60)
             expected_comma = False
-            state = next_state
-            if state != 3:
-                expected_brace_open = True
-        elif expected_bracket_open:
+            state = next_state # Switching between states
+            if state != 3: # State 3 does not represents sets and there is no brace
+                expected_brace_open = True # Brace is expected
+        elif expected_bracket_open: # Start of input source
             if char != "(":
                 err("Missing opening bracked in input source.", 60)
-            expected_brace_open   = True
+            expected_brace_open   = True # Next character must be {
             expected_bracket_open = False
-            state = 0
-        elif expected_bracket_close:
+            state = 0 # Switching from default state into state 0
+        elif expected_bracket_close: # End of inputsource
             if char != ")":
                 err("Missing closing bracked in input source", 60)
-            state = 5
+            state = 5 # any other data will cause syntax error
     return input_data
 
 
@@ -336,5 +355,4 @@ if args.help:
     Arguments.print_help()
     exit(0)
 input_data = parse_input(args)
-#TODO udelat semantickou kontrolu
 debug(input_data)
