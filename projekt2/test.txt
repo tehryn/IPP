@@ -1,15 +1,5 @@
-Zde je '#', ale neni tu komentar
-Zde je '#' # i komentar
-Zde je '#'
-'#'
-'a'#'a'
-a '#' #ahoj
-baf
-kocka#koment
-kocka #'ahoj
-aaa
-aba
-a ''# khgkh
-a 'a'# khgkh
-a '#'
-
+({a, b, c ,e},
+{'a', 'b', '', 'c'},
+{a'a'->b, a'b'->c, b''->e},#, c'a'->d, d'a'->c},
+a,
+{e})

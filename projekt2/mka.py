@@ -1,7 +1,6 @@
 #!/usr/bin/env python3.5
 import sys
 import re
-
 def debug(s):
     print("------\n" + str(s))
 
@@ -91,6 +90,154 @@ class Arguments:
             '-i, --case-insensitive   Program will be case insensitive.\n'
         )
 
+class FiniteStateMachine:
+    states     = set()
+    alphabet   = set()
+    rules      = list()
+    start      = str()
+    fin_states = set()
+
+    reachable_states       = set()
+    unreachable_states     = set()
+    finishing_states       = set()
+    non_finishing_states   = set()
+    nondeterministic_rules = list()
+    epsilon_rules          = list()
+
+
+    def __init__(self, declaration):
+        self.count = 0
+        self.states           = declaration["states"]
+        self.alphabet         = declaration["alphabet"]
+        self.rules            = declaration["rules"]
+        self.start            = declaration["start_state"]
+        self.fin_states       = declaration["fin_states"]
+        self.finishing_states = self.fin_states.copy()
+
+        self.__set_reachable(self.start)
+        self.unreachable_states   = self.states.difference(self.reachable_states)
+        if self.unreachable_states:
+            tmp = FiniteStateMachine.states_to_string(self.unreachable_states)
+            err("State(s) %s are not reachable."%(tmp), 62)
+        self.__set_non_finishing()
+        if len(self.non_finishing_states) > 1:
+            tmp = FiniteStateMachine.states_to_string(self.non_finishing_states)
+            err("States %s are non finishing."%(tmp), 62)
+        self.__find_nondeterminism()
+        if self.nondeterministic_rules:
+            tmp = FiniteStateMachine.rules_to_string(self.nondeterministic_rules)
+            err("Rules:\n%s\nare non deterministic."%(tmp), 62)
+        self.__set_epsilon()
+        if self.epsilon_rules:
+            tmp = FiniteStateMachine.rules_to_string(self.epsilon_rules)
+            err("Rules:\n%s\nare epsilon rules."%(tmp), 62)
+
+
+    def __str__(self):
+        out = "(\n"
+        out += FiniteStateMachine.states_to_string(self.states) + ",\n"
+        out += FiniteStateMachine.rules_to_string(self.rules) + ",\n"
+        out += self.start + ",\n"
+        out += FiniteStateMachine.states_to_string(self.fin_states) + "\n)\n"
+        return out
+
+
+    def __set_reachable(self, start_state):
+        self.reachable_states.add(start_state)
+        for rule in self.rules:
+            if not (rule["next"] in self.reachable_states) and rule["start"] == start_state:
+                self.__set_reachable(rule["next"])
+
+
+    def __set_non_finishing(self):
+        tmp = True
+        while tmp:
+            tmp = False
+            for rule in self.rules:
+                if rule["next"] in self.finishing_states and not(rule["start"] in self.finishing_states):
+                    self.finishing_states.add(rule["start"])
+                    tmp = True
+        self.non_finishing_states = self.states.difference(self.finishing_states)
+
+
+    def __find_nondeterminism(self):
+        for rule in self.rules:
+            for cmp in self.rules:
+                if cmp["start"] == rule["start"] and cmp["symbol"] == rule["symbol"]:
+                    if cmp != rule:
+                        self.nondeterministic_rules.append(rule)
+
+
+    def __set_epsilon(self):
+        for rule in self.rules:
+            if rule["symbol"] == "epsilon":
+                self.epsilon_rules.append(rule)
+
+
+    def minimize(machine):
+        combs = list()
+        def combine(X):
+            X = list(X)
+            if X and X not in combs:
+                combs.append(X)
+            i = 0
+            while i < len(X):
+                tmp = X[::]
+                del tmp[i]
+                combine(tmp)
+                i += 1
+            return
+
+        Q = list()
+        Q.append(machine.fin_states)
+        Q.append(machine.states.difference(machine.fin_states))
+        condition   = True
+        next_states = set()
+        while condition:
+            condition = False
+            idx = 0
+            for X in Q:
+                for state in X:
+                    for d in machine.alphabet:
+                        next_states = {r["next"] for r in machine.rules if state == r["start"] and d == r["symbol"] }
+                        if not next_states.issubset(X):
+                            condition = True
+                            del [idx]
+                            combs = list()
+                            X = ["a", "b", "c"]
+                            combine(X)
+                            combs.sort(key = lambda l:len(l), reverse = True)
+                            debug(combs)
+                            combs = list()
+                            X = [1, 2, 3, 4]
+                            combine(X)
+                            combs.sort(key = lambda l:len(l), reverse = True)
+                            debug(combs)
+                            exit(0)
+
+
+
+        return machine
+    def rules_to_string(rules):
+        output = "{"
+        for rule in rules:
+            if rule["symbol"] == "epsilon":
+                rule["symbol"] = ""
+        rules.sort(key = lambda r:(r["start"], r["symbol"]))
+        for rule in rules:
+            output += "\n" + rule["start"] + " '" + rule["symbol"] + "'" + " -> "
+            output += rule["next"] + ","
+        output = output[:-1] + "\n}"
+        return output
+
+
+    def states_to_string(states):
+        out = "{"
+        for state in sorted(list(states)):
+            out += state + ", "
+        out = out[:-2] + "}"
+        return out
+
 
 def err(message, code):
     """
@@ -121,6 +268,7 @@ def parse_input(args):
         data = data.lower()     # Convert whole input into lowercase
     data = retrieve_data(data)  # Parse input
     return data
+
 
 def prepare_data(data):
     """
@@ -182,6 +330,10 @@ def retrieve_data(data):
                 if char != "{":
                     err("Missing opening brace in input source.", 60)
                 expected_brace_open = False
+            elif char == "}":
+                expected_comma = True # Comma need to be inserted
+                state          = -1   # Switching to default state
+                next_state     = 1    # Setting next state
             else:
                 ident = ""
                 while char != ",":            # Reading state identificator
@@ -195,7 +347,8 @@ def retrieve_data(data):
                         i, char = next(data)  # Reading next char
                         if char is None:      # End of source was reached
                             err("Invalid imput source.", 60)
-                if not pattern.match(ident):  # Testing validity of identificator
+                regex = pattern.match(ident)
+                if not regex or regex.group(0) != ident:  # Testing validity of identificator
                     err("'%s' is invalid name of state."%(ident), 60)
                 input_data["states"].add(ident) # Adding state into set
         elif state == 1: # State 1 represents loading alphabet
@@ -206,23 +359,29 @@ def retrieve_data(data):
             elif char == "}":    # Set is empty
                 err("Input alphabet is empty.", 61)
             else:                # Reading symbol
-                if char != "'":  # Symbol is ''
+                if char != "'":  # 1st apostrophe
                     err("Missing apostrophe in input source.", 60)
                 i, char = next(data)
-                if (char == "'"):
+                if (char == "'"):     # 2nd apostrophe
                     i, char = next(data)
-                    if (char != "'"):
-                        err("Invalid member of alphabet.", 60)
-                    ident = "''"
+                    if (char != "'"): # 3rd apostrophe
+                        if char != "," and char != "}":
+                            err("Invalid member of alphabet.", 60)
+                        else:
+                            ident = "epsilon"
+                            input_data["alphabet"].add(ident)
+                    else:
+                        ident = "''"
                 elif char is None: # End of source is reached
                     err("Invalid input source.", 60)
                 else:              # Char is nothing special
                     ident = char
-                i, char = next(data)
-                if char != "'":    # Checking ending apostrophe
-                    err("Missing apostrophe in input source.", 60)
-                input_data["alphabet"].add(ident) # Adding symbol into set
-                i, char = next(data)
+                if ident != "epsilon":
+                    i, char = next(data)
+                    if char != "'":    # Checking ending apostrophe
+                        err("Missing apostrophe in input source.", 60)
+                    input_data["alphabet"].add(ident) # Adding symbol into set
+                    i, char = next(data)
                 if char == ",":           # Next sybol is expected
                     pass
                 elif char == "}":         # End of set
@@ -250,24 +409,30 @@ def retrieve_data(data):
                     i, char = next(data)
                     if char is None:       # End of source was reached
                         err("Invalid imput source.", 60)
-                if not pattern.match(ident["start"]): # Validing identificator
+                regex = pattern.match(ident["start"])
+                if not regex or regex.group(0) != ident["start"]: # Validing identificator
                     err("'%s' is invalid name of state."%(ident["start"]), 60)
                 if not (ident["start"] in input_data["states"]): # Checking if state is declareted
                     err("State '%s' is not declareted in states."%(ident["start"]), 61)
                 i, char = next(data) # Reading symbol
-                if char == "'": # Symbol is ''
+                if char == "'": # 2nd apostrophe
                     i, char = next(data)
-                    if char != "'":
-                        err("Missing apostrophe in input source.", 60)
-                    ident["symbol"] = "''"
+                    if char != "'": # 3rd apostrophe
+                        if char != "-":
+                            err("Missing apostrophe in input source.", 60)
+                        else:
+                            ident["symbol"] = "epsilon"
+                    else:
+                        ident["symbol"] = "''"
                 else:           # Symbol is nothing special
                     ident["symbol"] = char
                 if not(ident["symbol"] in input_data["alphabet"]): # Checking if symbol is declareted
                     err("Symbol '%s' is not declareted in input alphabet."%(ident["symbol"]), 61)
-                i, char = next(data)
-                if (char != "'"):  # Checking presence of ending apostrophe
-                    err("Missing apostrophe in input source.", 60)
-                i, char = next(data)
+                if ident["symbol"] != "epsilon":
+                    i, char = next(data)
+                    if (char != "'"):  # Checking presence of ending apostrophe
+                        err("Missing apostrophe in input source.", 60)
+                    i, char = next(data)
                 if char != "-":    # Checking presence of ->
                     err("Invalid syntax in set of rules", 60)
                 i, char = next(data)
@@ -285,7 +450,8 @@ def retrieve_data(data):
                     else:
                         ident["next"] += char
                         i, char = next(data)
-                if not pattern.match(ident["next"]): # Validing state
+                regex = pattern.match(ident["next"])
+                if not regex or regex.group(0) != ident["next"]: # Validing state
                     err("'%s' is invalid name of state."%(ident["next"]), 60)
                 if not(ident["next"] in input_data["states"]): # Checking if state is declareted
                     err("State '%s' is not declareted in states."%(ident["next"]), 61)
@@ -298,7 +464,8 @@ def retrieve_data(data):
                 i, char = next(data)
                 if char is None: # End of source reached
                     err("Invalid imput source.", 60)
-            if not pattern.match(ident): # Validing identificator
+            regex = pattern.match(ident)
+            if not regex or regex.group(0) != ident: # Validing identificator
                 err("'%s' is invalid name of state."%(ident), 60)
             if not(ident in input_data["states"]): # Checking if state is declareted
                 err("State '%s' is not declareted in states."%(ident), 61)
@@ -310,6 +477,9 @@ def retrieve_data(data):
                 if char != "{":
                     err("Missing opening brace in input source.", 60)
                 expected_brace_open = False
+            elif char == "}":                       # set is emty
+                state                  = -1         # Switching to default state
+                expected_bracket_close = True       # End of source expected
             else:
                 ident = ""
                 while char != ",":                  # Reading state identificator
@@ -322,7 +492,8 @@ def retrieve_data(data):
                         i, char = next(data)
                         if char is None:
                             err("Invalid imput source.", 60)
-                if not pattern.match(ident): # Validing state identificator
+                regex = pattern.match(ident)
+                if not regex or regex.group(0) != ident: # Validing state identificator
                     err("'%s' is invalid name of state."%(ident), 60)
                 if not (ident in input_data["states"]): # Checking is state was declareted
                     err("Finishing state '%s' is not declareted in states."%(ident), 61)
@@ -349,10 +520,31 @@ def retrieve_data(data):
     return input_data
 
 
-del sys.argv[0]
-args = Arguments(sys.argv)
-if args.help:
+def write(args, finte_state_machine):
+    try:
+        if args.output == sys.stdout:
+            file = sys.stdout
+        else:
+            file = open(args.output, "w")
+    except:
+        err("Unable to open output file '%s'"%(args.output), 3)
+    if args.finish:
+        if finte_state_machine.non_finishing_states:
+            file.write(str(list(finte_state_machine.non_finishing_states)[0]))
+        else:
+            file.write(str(0))
+        exit(0)
+    if args.minimize:
+        file.write(str(FiniteStateMachine.minimize(finite_state_machine)))
+    else:
+        file.write(str(finite_state_machine))
+    file.close()
+
+del sys.argv[0]                     # Deletes program name from arguments
+args = Arguments(sys.argv)          # Parse arguments
+if args.help:                       # Prints help if needed
     Arguments.print_help()
     exit(0)
-input_data = parse_input(args)
-debug(input_data)
+finite_state_machine = parse_input(args)   # Opens, closes and parses input source
+finite_state_machine = FiniteStateMachine(finite_state_machine) # Creates Finite state machine
+write(args, finite_state_machine)
