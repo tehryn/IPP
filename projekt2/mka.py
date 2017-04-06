@@ -1,8 +1,12 @@
 #!/usr/bin/env python3.5
 import sys
 import re
-def debug(s):
-    print("------\n" + str(s))
+def debug(*args):
+    print("-----------")
+    for arg in args:
+        sys.stdout.write(str(arg) + " ")
+    print("\n- - - - - -")
+
 
 class Arguments:
     """
@@ -174,8 +178,11 @@ class FiniteStateMachine:
                 self.epsilon_rules.append(rule)
 
 
-    def minimize(machine):
+    def minimize(self):
+        debug(self)
         combs = list()
+
+
         def combine(X):
             X = list(X)
             if X and X not in combs:
@@ -188,36 +195,73 @@ class FiniteStateMachine:
                 i += 1
             return
 
-        Q = list()
-        Q.append(machine.fin_states)
-        Q.append(machine.states.difference(machine.fin_states))
+
+        def split(X):
+            combine(X)
+            subsets = list()
+            for X1 in combs:
+                X1 = set(X1)
+                for X2 in combs:
+                    X2 = set(X2)
+                    if X2 | X1 == X and not X1 < X2 and not X2 < X1 and not X1 == X2:
+                        if [X1, X2] not in subsets and [X2, X1] not in subsets:
+                            subsets.append([X1, X2])
+            return subsets
+
+
+        def parse_new_rules(states, symbol, next):
+            self.states = self.states.difference(states)
+            self.states = self.states.difference(next)
+            new_state = str()
+            new_next  = str()
+            for state in sorted(list(states)):
+                new_state += state + "_"
+            for state in sorted(list(next)):
+                new_next += state + "_"
+            new_state = new_state[:-1]
+            new_next  = new_next[:-1]
+            new_rule  = {"start":new_state, "symbol":symbol, "next":new_next}
+            debug(new_rule)
+            self.states.add(new_state)
+            self.states.add(new_next)
+            self.rules = [r for r in self.rules if not (r["start"] in states or r["next"] in states)]
+            self.rules.append(new_rule)
+
+
+        Qm = list()
+        Qm.append(self.fin_states)
+        Qm.append(self.states.difference(self.fin_states))
         condition   = True
         next_states = set()
         while condition:
             condition = False
             idx = 0
-            for X in Q:
-                for state in X:
-                    for d in machine.alphabet:
-                        next_states = {r["next"] for r in machine.rules if state == r["start"] and d == r["symbol"] }
-                        if not next_states.issubset(X):
-                            condition = True
-                            del [idx]
-                            combs = list()
-                            X = ["a", "b", "c"]
-                            combine(X)
-                            combs.sort(key = lambda l:len(l), reverse = True)
-                            debug(combs)
-                            combs = list()
-                            X = [1, 2, 3, 4]
-                            combine(X)
-                            combs.sort(key = lambda l:len(l), reverse = True)
-                            debug(combs)
-                            exit(0)
+            for X in Qm:
+                Xij = split(X)
+                for X12 in Xij:
+                    for d in self.alphabet:
+                        for p1 in X12[0]:
+                            p1_next_state = [r["next"] for r in self.rules if r["symbol"] == d and r["start"] == p1]
+                            for p2 in X12[1]:
+                                p2_next_state = [r["next"] for r in self.rules if r["symbol"] == d and r["start"] == p2]
+                                if p2_next_state != p1_next_state:
+                                    debug("FUCK")
 
 
+#                for d in self.alphabet:
+#                    next_states = {r["next"] for r in self.rules if d == r["symbol"] and r["start"] in X }
+#                    debug("states " + str(X) +" znak: " + d +" Mnozina "+ str(next_states))
+#                    found = False
+#                    for Qm in Q:
+#                        if next_states.issubset(Qm):
+#                            found = True
+#                            parse_new_rules(Qm, d, X)
+#                    if not found:
+#                        debug("FUCK")
 
-        return machine
+                idx += 1
+        return self
+
     def rules_to_string(rules):
         output = "{"
         for rule in rules:
@@ -535,7 +579,7 @@ def write(args, finte_state_machine):
             file.write(str(0))
         exit(0)
     if args.minimize:
-        file.write(str(FiniteStateMachine.minimize(finite_state_machine)))
+        file.write(str(finite_state_machine.minimize()))
     else:
         file.write(str(finite_state_machine))
     file.close()
