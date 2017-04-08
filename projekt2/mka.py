@@ -4,8 +4,9 @@ import re
 def debug(*args):
     print("-----------")
     for arg in args:
-        sys.stdout.write(str(arg) + " ")
-    print("\n- - - - - -")
+        sys.stdout.write(str(arg) + "\n")
+        print("- - - - - -")
+    print("-----------")
 
 
 class Arguments:
@@ -140,6 +141,7 @@ class FiniteStateMachine:
     def __str__(self):
         out = "(\n"
         out += FiniteStateMachine.states_to_string(self.states) + ",\n"
+        out += FiniteStateMachine.alphabet_to_string(self.alphabet) + ",\n"
         out += FiniteStateMachine.rules_to_string(self.rules) + ",\n"
         out += self.start + ",\n"
         out += FiniteStateMachine.states_to_string(self.fin_states) + "\n)\n"
@@ -179,87 +181,76 @@ class FiniteStateMachine:
 
 
     def minimize(self):
-        debug(self)
-        combs = list()
+        def split(X, d):
+            X1 = set()
+            X2 = set()
+            next_states = set()
+            next_of_current = set()
+            for state in X:
+                if not X1:
+                    X1.add(state)
+                    next_states = {r["next"] for r in self.rules if r["start"] == state and r["symbol"] == d}
+                else:
+                    next_of_current = {r["next"] for r in self.rules if r["start"] == state and r["symbol"] == d}
+                    if next_of_current <= next_states:
+                        X1.add(state)
+                    else:
+                        X2.add(state)
+            return [X1, X2]
 
-
-        def combine(X):
-            X = list(X)
-            if X and X not in combs:
-                combs.append(X)
-            i = 0
-            while i < len(X):
-                tmp = X[::]
-                del tmp[i]
-                combine(tmp)
-                i += 1
-            return
-
-
-        def split(X):
-            combine(X)
-            subsets = list()
-            for X1 in combs:
-                X1 = set(X1)
-                for X2 in combs:
-                    X2 = set(X2)
-                    if X2 | X1 == X and not X1 < X2 and not X2 < X1 and not X1 == X2:
-                        if [X1, X2] not in subsets and [X2, X1] not in subsets:
-                            subsets.append([X1, X2])
-            return subsets
-
-
-        def parse_new_rules(states, symbol, next):
-            self.states = self.states.difference(states)
-            self.states = self.states.difference(next)
+        def parse_new_rule(states, symbol, next):
             new_state = str()
             new_next  = str()
+            isStart   = False
+            isFin     = False
             for state in sorted(list(states)):
                 new_state += state + "_"
+                if state == self.start:
+                    isStart = True
+                if state in self.fin_states:
+                    isFin = True
             for state in sorted(list(next)):
                 new_next += state + "_"
             new_state = new_state[:-1]
             new_next  = new_next[:-1]
-            new_rule  = {"start":new_state, "symbol":symbol, "next":new_next}
-            debug(new_rule)
-            self.states.add(new_state)
-            self.states.add(new_next)
-            self.rules = [r for r in self.rules if not (r["start"] in states or r["next"] in states)]
-            self.rules.append(new_rule)
+            new_rule  = {"start":new_state, "symbol":symbol,"next":new_next,
+                         "start_state":isStart, "fin_state":isFin}
+            return new_rule
 
 
         Qm = list()
-        Qm.append(self.fin_states)
-        Qm.append(self.states.difference(self.fin_states))
+        if (self.fin_states):
+            Qm.append(self.fin_states)
+        if (self.states.difference(self.fin_states)):
+            Qm.append(self.states.difference(self.fin_states))
         condition   = True
         next_states = set()
+        new_rules   = list()
         while condition:
             condition = False
-            idx = 0
+            new_rules   = list()
             for X in Qm:
-                Xij = split(X)
-                for X12 in Xij:
-                    for d in self.alphabet:
-                        for p1 in X12[0]:
-                            p1_next_state = [r["next"] for r in self.rules if r["symbol"] == d and r["start"] == p1]
-                            for p2 in X12[1]:
-                                p2_next_state = [r["next"] for r in self.rules if r["symbol"] == d and r["start"] == p2]
-                                if p2_next_state != p1_next_state:
-                                    debug("FUCK")
+                for d in self.alphabet:
+                    next_states = {r["next"] for r in self.rules if d == r["symbol"] and r["start"] in X }
+                    found = False
+                    for Qi in Qm:
+                        if next_states.issubset(Qi):
+                            found = True
+                            new_rules.append(parse_new_rule(X, d, Qi))
+                    if not found:
+                        condition = True
+                        X12 = split(X, d)
+                        del Qm[Qm.index(X)]
+                        Qm.append(X12[0])
+                        Qm.append(X12[1])
+                        break
+                if not found:
+                    break
 
-
-#                for d in self.alphabet:
-#                    next_states = {r["next"] for r in self.rules if d == r["symbol"] and r["start"] in X }
-#                    debug("states " + str(X) +" znak: " + d +" Mnozina "+ str(next_states))
-#                    found = False
-#                    for Qm in Q:
-#                        if next_states.issubset(Qm):
-#                            found = True
-#                            parse_new_rules(Qm, d, X)
-#                    if not found:
-#                        debug("FUCK")
-
-                idx += 1
+        self.states = {r["start"] : r["next"] for r in new_rules}
+        self.rules  = new_rules
+        self.start  = [r["start"] for r in new_rules if r["start_state"] is True][0]
+        self.fin_states = {r["start"] for r in new_rules if r["fin_state"] is True}
         return self
 
     def rules_to_string(rules):
@@ -281,6 +272,14 @@ class FiniteStateMachine:
             out += state + ", "
         out = out[:-2] + "}"
         return out
+
+    def alphabet_to_string(alphabet):
+        out = "{"
+        for d in sorted(list(alphabet)):
+            out += "'" + d + "'" + ", "
+        out = out[:-2] + "}"
+        return out
+
 
 
 def err(message, code):
@@ -355,7 +354,7 @@ def retrieve_data(data):
     input_data             = {"states":set(), "alphabet":set(), "rules":list(),
                               "start_state":str(), "fin_states":set()}
     # Regex pattern for validing state variable
-    pattern                = re.compile(r"[_]{0}[aA-zZ]\w*[_]{0}")
+    pattern                = re.compile(r"[_]{0}[aA-zZ]+\w*[_]{0}")
 
     ident                  = str()  # Variable for temporary storing usefull data
     state                  = -1     # Represents current state of state machine
