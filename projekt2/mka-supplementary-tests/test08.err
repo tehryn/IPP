@@ -1,4 +1,1 @@
-  File "mka.py", line 350
-    """        out = "{"
-                 ^
-SyntaxError: invalid syntax
+You can't just use --minimize and --find-non-finishing argument at once...

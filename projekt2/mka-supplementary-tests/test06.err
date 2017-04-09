@@ -1,4 +1,6 @@
-  File "mka.py", line 350
-    """        out = "{"
-                 ^
-SyntaxError: invalid syntax
+Rules:
+{
+s ')' -> q3,
+s ')' -> q4
+}
+are non deterministic.

@@ -347,7 +347,8 @@ class FiniteStateMachine:
     def states_to_string(states):
         """
             Converts given states into string.
-        """        out = "{"
+        """
+        out = "{"
         for state in sorted(list(states)):
             out += state + ", "
         out = out[:-2] + "}"
@@ -356,7 +357,8 @@ class FiniteStateMachine:
     def alphabet_to_string(alphabet):
         """
             Converts given alphabet into string.
-        """        out = "{"
+        """
+        out = "{"
         for d in sorted(alphabet):
             out += "'" + d + "'" + ", "
         out = out[:-2] + "}"

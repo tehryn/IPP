@@ -1,4 +1,0 @@
-  File "mka.py", line 350
-    """        out = "{"
-                 ^
-SyntaxError: invalid syntax
