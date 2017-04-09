@@ -12,9 +12,18 @@ def debug(*args):
 class Arguments:
     """
         Class for storing program arguments.
+
         Class has these methods:
         __init__(self, arguments)
         __str__(self)
+
+        Class has these public atributes:
+        help          Tells if --help is in arguments
+        input         Stores name of input file
+        output        Stores name of output file
+        finish        Tells if --find-non-finishing is in arguments
+        minimize      Tells if --minimize is in arguments
+        insensitive   Tells if --case-insensitive is in arguments
     """
     help         = False         # Tells if --help is in arguments
     input        = sys.stdin     # Stores name of input file
@@ -96,21 +105,53 @@ class Arguments:
         )
 
 class FiniteStateMachine:
-    states     = set()
-    alphabet   = set()
-    rules      = list()
-    start      = str()
-    fin_states = set()
+    """
+        Class that represents finite state machine. Class can only accept
+        well specified finite state machine.
 
-    reachable_states       = set()
-    unreachable_states     = set()
-    finishing_states       = set()
-    non_finishing_states   = set()
-    nondeterministic_rules = list()
-    epsilon_rules          = list()
+        Class has these methods:
+        __init__(self, declaration)
+        __str__(self)
+        minimize(self)
+        rules_to_string(rules)
+        alphabet_to_string(alphabet)
+        states_to_string(states)
+
+        Class has these atributes:
+        states                 Set of all states
+        alphabet               Set of alphabet
+        rules                  Set of rules
+        start                  Starting state
+        fin_states             Set of finite states
+        reachable_states       Set of reachable states
+        unreachable_states     Set of unreachable states
+        finishing_states       Set of finishing states
+        non_finishing_states   Set of non finishing states
+        nondeterministic_rules List of non deterministic rules
+        epsilon_rules          List of rules with epsilon symbol
+
+    """
+    states     = set()  # Set of all states
+    alphabet   = set()  # Set of alphabet
+    rules      = list() # Set of rules
+    start      = str()  # Starting state
+    fin_states = set()  # Set of finite states
+
+    reachable_states       = set()  # Set of reachable states
+    unreachable_states     = set()  # Set of unreachable states
+    finishing_states       = set()  # Set of finishing states
+    non_finishing_states   = set()  # Set of non finishing states
+    nondeterministic_rules = list() # List of non deterministic rules
+    epsilon_rules          = list() # List of rules with epsilon symbol
 
 
     def __init__(self, declaration):
+        """
+            Creates new state machine and set all parametrs, also checks if
+            dictionary declaration represents well specified finite state machine.
+        """
+
+        # Sets basic atributes
         self.count = 0
         self.states           = declaration["states"]
         self.alphabet         = declaration["alphabet"]
@@ -119,6 +160,7 @@ class FiniteStateMachine:
         self.fin_states       = declaration["fin_states"]
         self.finishing_states = self.fin_states.copy()
 
+        # Sets rest of atributes
         self.__set_reachable(self.start)
         self.unreachable_states   = self.states.difference(self.reachable_states)
         if self.unreachable_states:
@@ -139,6 +181,9 @@ class FiniteStateMachine:
 
 
     def __str__(self):
+        """
+            Creates and return string representing state machine.
+        """
         out = "(\n"
         out += FiniteStateMachine.states_to_string(self.states) + ",\n"
         out += FiniteStateMachine.alphabet_to_string(self.alphabet) + ",\n"
@@ -149,6 +194,9 @@ class FiniteStateMachine:
 
 
     def __set_reachable(self, start_state):
+        """
+            Detects reachable states and sets atribute.
+        """
         self.reachable_states.add(start_state)
         for rule in self.rules:
             if not (rule["next"] in self.reachable_states) and rule["start"] == start_state:
@@ -156,6 +204,10 @@ class FiniteStateMachine:
 
 
     def __set_non_finishing(self):
+        """
+            Detects non finishing states and sets both finishing_states and
+            non_finishing_states attributes.
+        """
         tmp = True
         while tmp:
             tmp = False
@@ -167,6 +219,9 @@ class FiniteStateMachine:
 
 
     def __find_nondeterminism(self):
+        """
+            Detects non deterministic rules and sets attribute.
+        """
         for rule in self.rules:
             for cmp in self.rules:
                 if cmp["start"] == rule["start"] and cmp["symbol"] == rule["symbol"]:
@@ -175,85 +230,108 @@ class FiniteStateMachine:
 
 
     def __set_epsilon(self):
+        """
+            Detects all rules with epsilon symbol.
+        """
         for rule in self.rules:
             if rule["symbol"] == "epsilon":
                 self.epsilon_rules.append(rule)
 
 
     def minimize(self):
+        """
+            Minimizes finite state machine.
+        """
         def split(X, d):
-            X1 = set()
-            X2 = set()
-            next_states = set()
-            next_of_current = set()
+            """
+                Splits set of states X into 2 states and return them as list.
+            """
+            X1 = set()               # First set of states
+            X2 = set()               # Second set of states
+            next_states = set()      # Set of following states of X1
+            next_of_current = set()  # Set of following states of X2
+            # Spliting X
             for state in X:
-                if not X1:
-                    X1.add(state)
+                if not X1: # First element
+                    X1.add(state) # Adds element into set
+                    # Initialize next_states set
                     next_states = {r["next"] for r in self.rules if r["start"] == state and r["symbol"] == d}
                 else:
+                    # Sets new value for next_of_current
                     next_of_current = {r["next"] for r in self.rules if r["start"] == state and r["symbol"] == d}
-                    if next_of_current <= next_states:
+                    if next_of_current <= next_states: # Tests if next_of_current is subset of next_states
                         X1.add(state)
                     else:
                         X2.add(state)
             return [X1, X2]
 
         def parse_new_rule(states, symbol, next):
+            """
+                Creates new rule of state machine.
+            """
             new_state = str()
             new_next  = str()
             isStart   = False
             isFin     = False
+            # Join set of states into one state and adds info if state is
+            # starting state of finite state.
             for state in sorted(list(states)):
                 new_state += state + "_"
                 if state == self.start:
                     isStart = True
                 if state in self.fin_states:
                     isFin = True
+            # Join set of states into one state
             for state in sorted(list(next)):
                 new_next += state + "_"
             new_state = new_state[:-1]
             new_next  = new_next[:-1]
-            new_rule  = {"start":new_state, "symbol":symbol,"next":new_next,
-                         "start_state":isStart, "fin_state":isFin}
-            return new_rule
+            return {"start":new_state, "symbol":symbol,"next":new_next,
+                    "start_state":isStart, "fin_state":isFin}
 
-
-        Qm = list()
-        if (self.fin_states):
+        # Algorithm from IFJ
+        Qm = list() # List of sets. Each set of states can be joined into one state
+        # Initializing List of sets.
+        if (self.fin_states): # Adding set of finite states if its not empty set
             Qm.append(self.fin_states)
-        if (self.states.difference(self.fin_states)):
+        if (self.states.difference(self.fin_states)): # Adding rest if its not empty set
             Qm.append(self.states.difference(self.fin_states))
-        condition   = True
-        next_states = set()
-        new_rules   = list()
+        condition   = True   # Tells if there is possible spliting of future set X
+        next_states = set()  # Set of following states
+        new_rules   = list() # List of new rules
         while condition:
-            condition = False
-            new_rules   = list()
-            for X in Qm:
-                for d in self.alphabet:
+            condition = False    # We are optimistic, no spliting will happen
+            new_rules   = list() # Deleting all new rules
+            for X in Qm:         # Parsing Qm
+                for d in self.alphabet: # Parsing X
+                    # New set of following states of states in set X
                     next_states = {r["next"] for r in self.rules if d == r["symbol"] and r["start"] in X }
-                    found = False
+                    found = False # Tells if we found superset of next_states
                     for Qi in Qm:
                         if next_states.issubset(Qi):
-                            found = True
-                            new_rules.append(parse_new_rule(X, d, Qi))
-                    if not found:
-                        condition = True
-                        X12 = split(X, d)
-                        del Qm[Qm.index(X)]
-                        Qm.append(X12[0])
-                        Qm.append(X12[1])
-                        break
+                            found = True # We found, no split will happen
+                            new_rules.append(parse_new_rule(X, d, Qi)) # Creates new rule
+                    if not found: # We did not found
+                        condition = True    # Loop must start again
+                        X12 = split(X, d)   # Splits X into X1 and X2
+                        del Qm[Qm.index(X)] # Removes X from Qm
+                        Qm.append(X12[0])   # Adds X1 into Qm
+                        Qm.append(X12[1])   # Adds X2 into Qm
+                        break               # There is no need of continuing
                 if not found:
-                    break
+                    break                   # There is no need of continuing
 
+        # Change states, rules, start and fin_state attributes of finite state machine
+        # so machone is now minimized.
         self.states = {r["start"] : r["next"] for r in new_rules}
-        self.rules  = new_rules
+        self.rules  = [{"start":r["start"],"symbol":r["symbol"],"next":r["next"]} for r in new_rules]
         self.start  = [r["start"] for r in new_rules if r["start_state"] is True][0]
         self.fin_states = {r["start"] for r in new_rules if r["fin_state"] is True}
-        return self
 
     def rules_to_string(rules):
+        """
+            Converts given rules into string.
+        """
         output = "{"
         for rule in rules:
             if rule["symbol"] == "epsilon":
@@ -267,15 +345,19 @@ class FiniteStateMachine:
 
 
     def states_to_string(states):
-        out = "{"
+        """
+            Converts given states into string.
+        """        out = "{"
         for state in sorted(list(states)):
             out += state + ", "
         out = out[:-2] + "}"
         return out
 
     def alphabet_to_string(alphabet):
-        out = "{"
-        for d in sorted(list(alphabet)):
+        """
+            Converts given alphabet into string.
+        """        out = "{"
+        for d in sorted(alphabet):
             out += "'" + d + "'" + ", "
         out = out[:-2] + "}"
         return out
@@ -578,7 +660,8 @@ def write(args, finte_state_machine):
             file.write(str(0))
         exit(0)
     if args.minimize:
-        file.write(str(finite_state_machine.minimize()))
+        finite_state_machine.minimize()
+        file.write(str(finite_state_machine))
     else:
         file.write(str(finite_state_machine))
     file.close()
@@ -590,4 +673,4 @@ if args.help:                       # Prints help if needed
     exit(0)
 finite_state_machine = parse_input(args)   # Opens, closes and parses input source
 finite_state_machine = FiniteStateMachine(finite_state_machine) # Creates Finite state machine
-write(args, finite_state_machine)
+write(args, finite_state_machine)   # Writes output
