@@ -54,10 +54,10 @@
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 TASK=mka
-INTERPRETER="php5.6"
+INTERPRETER="python3.6"
 EXTENSION=php
-#INTERPRETER="python3.6"
-#EXTENSION=py
+INTERPRETER="python3.6"
+EXTENSION=py
 
 # cesty ke vstupním a výstupním souborům
 LOCAL_IN_PATH="./" # (simple relative path)
