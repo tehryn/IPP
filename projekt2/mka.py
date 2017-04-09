@@ -646,6 +646,9 @@ def retrieve_data(data):
 
 
 def write(args, finte_state_machine):
+    """
+        Opens output file and writes into it.
+    """
     try:
         if args.output == sys.stdout:
             file = sys.stdout
