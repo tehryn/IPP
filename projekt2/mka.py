@@ -475,7 +475,7 @@ def retrieve_data(data):
                         if char is None:      # End of source was reached
                             err("Invalid imput source.", 60)
                 regex = pattern.match(ident)
-                if not regex or regex.group(0) != ident:  # Testing validity of identificator
+                if not regex or regex.group(0) != ident or ident.startswith("_") or ident[:-1] == "_":  # Testing validity of identificator
                     err("'%s' is invalid name of state."%(ident), 60)
                 input_data["states"].add(ident) # Adding state into set
         elif state == 1: # State 1 represents loading alphabet
