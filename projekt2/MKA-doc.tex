@@ -39,8 +39,8 @@
             konečného automatu. Nejdříve byly
             nalezeny dostupné a nedostupné stavy, následně neukončující stavy, poté
             nedeterminismy a následně epsilon přechody. Pokud kontrola, zda se jedná
-            o dobře specifikovaný konečný automat proběhla v pořádku, mohlo dojít buď
-            k výpisu výsledků (Pokud nebyla požadována minimalizace). Samotná tvorba
+            o dobře specifikovaný konečný automat proběhla v pořádku, mohlo dojít
+            k výpisu výsledků (pokud nebyla požadována minimalizace). Samotná tvorba
             algoritmu pro minimilizaci zabrala nejvíce času. Metoda pro minimalizaci
             obsahuje 2 pomocné funkce a 5 -- 6 do sebe vnořených cyklů. Algoritmus
             je založen na algoritmu probíraném v rámci předmětu IFJ.
@@ -49,15 +49,16 @@
             a sémantických chyb a nepředpokládá se, že by během programu mohla nastat
             chyba.
         \subsection{Řešení chybových stavů}
-            Chyby otevření souborů jsem češil pomocí odchytnutí výjimky. Ostatní
-            chyby jsem detekoval pomocí podmíněných skoků. Chyby zpracovávala
-            vlastní funkce, která vytiskla požadovanou zprávu na chybový výstup
+            Chyby otevření souborů jsem češil pomocí odchycení výjimky. Ostatní
+            chyby jsem detekoval pomocí podmíněných skoků. Vólání exit pote zastávala
+            vlastní funkce, která vytiskla požadovanou zprávu na standartní chybový výstup
             a ukončila program se zadaným chybovým kódem.
         \subsection{Testování}
             Během tvorby scriptu jsem script testoval na svém stroji, (Ubuntu 16.04)
             a to interpretem Python 3.5. Poté, co mi script pracoval na mém stroji,
             jsem testování spustil na školním serveru Merlin, kde proběhlo, až na
-            jeden referenční test (chybějící odřádkování), v pořádku.
+            jeden referenční test (chybějící odřádkování, které nakonec bylo správné),
+            v pořádku.
         \subsection{Odevzdání}
             Úlohu jsem se snažil dokončit tak, abych stihl pokusné odevzdání.
             Až na pár drobných úprav se mi to podařilo i s rezervou jednoho dne.
@@ -71,7 +72,7 @@
 
     \section{Shrnutí z pohledu autora}
         Tento projekt nebyla má první zkušenost s jazykem Python a už jsem byl
-        i dokonce zvyklý na syntax a měl jsem alespoň minimální vědomí, jak
+        při jeho tvorbě zvyklý na syntax a měl jsem alespoň minimální vědomí, jak
         interpret Pythonu funguje. Zkušenosti s Pythonem jsem měl v rámci předmětu
         scriptovací jazyky a spolupráci s výzkumnou skupinou KNOT. Nicméně přesto
         Python není u mě nijak oblíbený jazyk, zejména kvůli syntaxy. Programy v
