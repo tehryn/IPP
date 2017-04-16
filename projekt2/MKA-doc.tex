@@ -21,15 +21,15 @@
         včetně kontroly, zda zadaný automat odpovídá definici dobře specifikovaného
         konečného automatu.
         Pro tvorbu scriptu byly hojně využity abstraktní datové typy, které python
-        nabízí, zejmená řetězec, slovník, seznam a množina. Dále byla použita knihovna
+        nabízí, zejména řetězec, slovník, seznam a množina. Dále byla použita knihovna
         re pro kontrolu, zda jméno stavu konečného automatu je validní.
     \section{Postup řešení}
         \subsection{Zpracování parametrů programu}
             Parametry (argumenty) programu jsou zpracovány pomocí třídy Arguments.
-            Objekt této třídy uchovává veškěré nastavení programu. Construktor třídy
+            Objekt této třídy uchovává veškeré nastavení programu. Construktor třídy
             zároveň kontroluje správnost argumentů.
         \subsection{Načítání vstupních dat}
-            Při načítání vstupního soubory byly odstraněny veškeré bílé znaky a
+            Při načítání vstupního souboru byly odstraněny veškeré bílé znaky a
             komentáře. Následně byl takto načtený řetězec zpracován pomocí rozsáhlého
             stavového automatu, během kterého probíhala kontrola syntaktických a
             sémantických chyb.
@@ -49,8 +49,8 @@
             a sémantických chyb a nepředpokládá se, že by během programu mohla nastat
             chyba.
         \subsection{Řešení chybových stavů}
-            Chyby otevření souborů jsem češil pomocí odchycení výjimky. Ostatní
-            chyby jsem detekoval pomocí podmíněných skoků. Vólání exit pote zastávala
+            Chyby otevření souborů jsem řešil pomocí odchycení vyjímky. Ostatní
+            chyby jsem detekoval pomocí podmíněných skoků. Volání exit zastávala
             vlastní funkce, která vytiskla požadovanou zprávu na standartní chybový výstup
             a ukončila program se zadaným chybovým kódem.
         \subsection{Testování}
@@ -63,7 +63,7 @@
             Úlohu jsem se snažil dokončit tak, abych stihl pokusné odevzdání.
             Až na pár drobných úprav se mi to podařilo i s rezervou jednoho dne.
             Výsledné hodnocení programu bylo v rozmezí od 80\% -- 100\%.
-            Dokumentaci jsem tvořil před pokusném odevzdání (po pokusném odevzdání
+            Dokumentaci jsem tvořil v den pokusného (po pokusném odevzdání
             probělo pár drobných úprav) a to pomocí \LaTeX u. Při dokumentaci
             kódu jsem se snažil používat dokumentační řetězce ke všem funkcím a
             třídám a snažil jsem se přehledně komentovat svůj kód, aby byl co
@@ -71,11 +71,11 @@
             jazyce.
 
     \section{Shrnutí z pohledu autora}
-        Tento projekt nebyla má první zkušenost s jazykem Python a už jsem byl
-        při jeho tvorbě zvyklý na syntax a měl jsem alespoň minimální vědomí, jak
+        Tento projekt nebyl mou první zkušeností s jazykem Python, a už jsem byl
+        při jeho tvorbě zvyklý na syntax a měl jsem alespoň minimální povědomí, jak
         interpret Pythonu funguje. Zkušenosti s Pythonem jsem měl v rámci předmětu
-        scriptovací jazyky a spolupráci s výzkumnou skupinou KNOT. Nicméně přesto
+        scriptovací jazyky a spolupráce s výzkumnou skupinou KNOT. Nicméně přesto
         Python není u mě nijak oblíbený jazyk, zejména kvůli syntaxy. Programy v
-        pythonu mi osobně přijdou značně nečitelné, zejména, když odsazení
+        Pythonu mi osobně přijdou značně nečitelné, zejména, když odsazení
         od začátku stránky je už příliš velké.
 \end{document}
